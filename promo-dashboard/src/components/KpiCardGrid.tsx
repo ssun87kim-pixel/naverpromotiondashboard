@@ -106,6 +106,13 @@ const KpiCardGrid: React.FC<KpiCardGridProps> = ({ kpis, targetAmount: _targetAm
           ))}
         </div>
       )}
+      {/* 기획의도/주요혜택 */}
+      {context?.planningIntent && (
+        <div className="bg-white border border-gray-200 rounded-lg p-3 w-full">
+          <span className="text-sm font-bold text-gray-900">기획의도/주요혜택</span>
+          <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{context.planningIntent}</p>
+        </div>
+      )}
     </div>
   );
 };

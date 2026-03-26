@@ -8,12 +8,12 @@ const AiAnalysisSection: React.FC<AiAnalysisSectionProps> = ({ planningIntent })
   return (
     <section className="flex flex-col gap-4">
       <h2 className="text-base font-semibold text-gray-900">
-        AI 분석 — 기획 의도 vs 결과
+        AI 분석 — 기획의도/주요혜택 vs 결과
       </h2>
 
       {planningIntent && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
-          <p className="text-xs font-medium text-gray-500 mb-1">기획 의도</p>
+          <p className="text-xs font-medium text-gray-500 mb-1">기획의도/주요혜택</p>
           <p className="text-sm text-gray-700 whitespace-pre-wrap">{planningIntent}</p>
         </div>
       )}
@@ -40,7 +40,7 @@ const AiAnalysisSection: React.FC<AiAnalysisSectionProps> = ({ planningIntent })
           AI 분석 준비 중입니다. DB 연동 및 AI API 설정 후 활성화됩니다.
         </p>
         <p className="text-xs text-gray-400">
-          기획 의도 대비 성과 평가, 주요 지표 브리핑, Next Action 제언이 여기에 표시됩니다.
+          기획의도/주요혜택 대비 성과 평가, 주요 지표 브리핑, Next Action 제언이 여기에 표시됩니다.
         </p>
       </div>
     </section>

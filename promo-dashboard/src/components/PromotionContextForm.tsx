@@ -265,11 +265,11 @@ const PromotionContextForm = forwardRef<PromotionContextFormRef, Props>(({ onSub
 
       {/* 기획의도 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">기획 의도</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">기획의도/주요혜택</label>
         <textarea
           value={planningIntent}
           onChange={(e) => setPlanningIntent(e.target.value)}
-          placeholder="이번 행사의 기획 의도를 입력하세요"
+          placeholder="이번 행사의 기획의도/주요혜택을 입력하세요"
           rows={3}
           className={inputClass}
           data-testid="field-planningIntent"
