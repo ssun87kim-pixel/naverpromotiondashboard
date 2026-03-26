@@ -289,7 +289,7 @@ function App() {
       {/* 푸터 */}
       <footer className="border-t border-gray-200 bg-white mt-8">
         <div className="max-w-screen-xl mx-auto px-4 py-4 text-center text-xs text-gray-400">
-          제작 및 수정 문의: DESKER 김선영 (현재버전명: v2.1-compare-side-by-side)
+          제작 및 수정 문의: DESKER 김선영 (현재버전명: v3.0-dashboard-complete)
         </div>
       </footer>
     </div>
