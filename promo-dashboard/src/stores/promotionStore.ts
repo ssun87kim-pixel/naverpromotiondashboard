@@ -51,6 +51,8 @@ interface PromotionStore {
   kpis: KpiSummary | null;
   compareKpis: (KpiSummary | null)[];
   compareTimeSeries: DailyTimeSeries[][];
+  compareHourlyData: HourlyData[][];
+  compareProductRows: ProductRow[][];
   timeSeries: DailyTimeSeries[];
   hourlyData: HourlyData[];
   productRows: ProductRow[];
@@ -94,6 +96,8 @@ const initialState = {
   kpis: null,
   compareKpis: [] as (KpiSummary | null)[],
   compareTimeSeries: [] as DailyTimeSeries[][],
+  compareHourlyData: [] as HourlyData[][],
+  compareProductRows: [] as ProductRow[][],
   timeSeries: [] as DailyTimeSeries[],
   hourlyData: [] as HourlyData[],
   productRows: [] as ProductRow[],
@@ -220,6 +224,8 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
     const compareParsed: ParsedEntry[] = [];
     const compareKpisResult: (KpiSummary | null)[] = [];
     const compareTimeSeriesResult: DailyTimeSeries[][] = [];
+    const compareHourlyResult: HourlyData[][] = [];
+    const compareProductResult: ProductRow[][] = [];
 
     for (let i = 0; i < compareFiles.length; i++) {
       const cf = compareFiles[i];
@@ -227,6 +233,8 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
         compareParsed.push({});
         compareKpisResult.push(null);
         compareTimeSeriesResult.push([]);
+        compareHourlyResult.push([]);
+        compareProductResult.push([]);
         continue;
       }
       if (signal?.aborted) throw new DOMException('분석이 취소되었습니다', 'AbortError');
@@ -256,6 +264,8 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
       const cKpis = computeKpis(cSales, cProducts, cTarget);
       const cLiveDates = compareContexts[i]?.liveDates ?? [];
       const cTimeSeries = cSales ? computeTimeSeries(cSales, cLiveDates) : [];
+      const cHourly = cSales ? computeHourly(cSales) : [];
+      const cProductRows = cMerged ? computeProductStats(cMerged) : [];
 
       compareParsed.push({
         sales: cSales ?? undefined,
@@ -263,6 +273,8 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
       });
       compareKpisResult.push(cKpis);
       compareTimeSeriesResult.push(cTimeSeries);
+      compareHourlyResult.push(cHourly);
+      compareProductResult.push(cProductRows);
     }
 
     // 10. 결과 저장
@@ -274,6 +286,8 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
       kpis,
       compareKpis: compareKpisResult,
       compareTimeSeries: compareTimeSeriesResult,
+      compareHourlyData: compareHourlyResult,
+      compareProductRows: compareProductResult,
       timeSeries,
       hourlyData,
       productRows,
@@ -287,12 +301,16 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
       const updatedFiles = state.compareFiles.filter((_, i) => i !== index);
       const updatedKpis = state.compareKpis.filter((_, i) => i !== index);
       const updatedTimeSeries = state.compareTimeSeries.filter((_, i) => i !== index);
+      const updatedHourly = state.compareHourlyData.filter((_, i) => i !== index);
+      const updatedProducts = state.compareProductRows.filter((_, i) => i !== index);
       const updatedParsed = state.parsedData.compare.filter((_, i) => i !== index);
       return {
         compareContexts: updatedContexts,
         compareFiles: updatedFiles,
         compareKpis: updatedKpis,
         compareTimeSeries: updatedTimeSeries,
+        compareHourlyData: updatedHourly,
+        compareProductRows: updatedProducts,
         parsedData: { ...state.parsedData, compare: updatedParsed },
       };
     });

@@ -100,13 +100,28 @@ const MiniUploadZone: React.FC<MiniUploadZoneProps> = ({
   );
 };
 
+function parseFlexDate(input: string): string {
+  const trimmed = input.trim().replace(/[./]/g, '-');
+  if (/^\d{8}$/.test(trimmed)) {
+    return `${trimmed.slice(0, 4)}-${trimmed.slice(4, 6)}-${trimmed.slice(6, 8)}`;
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+  return input;
+}
+
 const CompareEventUpload: React.FC<Props> = ({ index, onFilesChange, onContextChange }) => {
   const [files, setFiles] = useState<FileSet>({});
   const [fileErrors, setFileErrors] = useState<Partial<Record<keyof FileSet, string>>>({});
   const [eventName, setEventName] = useState('');
   const [startDate, setStartDate] = useState('');
+  const [startDateDisplay, setStartDateDisplay] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [endDateDisplay, setEndDateDisplay] = useState('');
   const [liveDates, setLiveDates] = useState<string[]>([]);
+  const startDateRef = useRef<HTMLInputElement>(null);
+  const endDateRef = useRef<HTMLInputElement>(null);
 
   const inputClass =
     'w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue';
@@ -154,26 +169,96 @@ const CompareEventUpload: React.FC<Props> = ({ index, onFilesChange, onContextCh
           className={inputClass}
         />
         <div className="grid grid-cols-2 gap-2">
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => {
-              setStartDate(e.target.value);
-              handleContextChange({ startDate: e.target.value });
-            }}
-            className={inputClass}
-            aria-label="시작일"
-          />
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => {
-              setEndDate(e.target.value);
-              handleContextChange({ endDate: e.target.value });
-            }}
-            className={inputClass}
-            aria-label="종료일"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              value={startDateDisplay}
+              onChange={(e) => {
+                const val = e.target.value;
+                setStartDateDisplay(val);
+                const parsed = parseFlexDate(val);
+                if (/^\d{4}-\d{2}-\d{2}$/.test(parsed)) {
+                  setStartDate(parsed);
+                  setStartDateDisplay(parsed);
+                  handleContextChange({ startDate: parsed });
+                }
+              }}
+              onBlur={() => {
+                const parsed = parseFlexDate(startDateDisplay);
+                setStartDate(parsed);
+                setStartDateDisplay(parsed);
+                handleContextChange({ startDate: parsed });
+              }}
+              placeholder="시작일"
+              className={`${inputClass} pr-7`}
+              aria-label="시작일"
+            />
+            <button
+              type="button"
+              onClick={() => startDateRef.current?.showPicker()}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              tabIndex={-1}
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M1.5 6H14.5" stroke="currentColor" strokeWidth="1.2"/><path d="M5 1V4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/><path d="M11 1V4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+            </button>
+            <input
+              ref={startDateRef}
+              type="date"
+              value={startDate}
+              onChange={(e) => {
+                setStartDate(e.target.value);
+                setStartDateDisplay(e.target.value);
+                handleContextChange({ startDate: e.target.value });
+              }}
+              className="sr-only"
+              tabIndex={-1}
+            />
+          </div>
+          <div className="relative">
+            <input
+              type="text"
+              value={endDateDisplay}
+              onChange={(e) => {
+                const val = e.target.value;
+                setEndDateDisplay(val);
+                const parsed = parseFlexDate(val);
+                if (/^\d{4}-\d{2}-\d{2}$/.test(parsed)) {
+                  setEndDate(parsed);
+                  setEndDateDisplay(parsed);
+                  handleContextChange({ endDate: parsed });
+                }
+              }}
+              onBlur={() => {
+                const parsed = parseFlexDate(endDateDisplay);
+                setEndDate(parsed);
+                setEndDateDisplay(parsed);
+                handleContextChange({ endDate: parsed });
+              }}
+              placeholder="종료일"
+              className={`${inputClass} pr-7`}
+              aria-label="종료일"
+            />
+            <button
+              type="button"
+              onClick={() => endDateRef.current?.showPicker()}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              tabIndex={-1}
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M1.5 6H14.5" stroke="currentColor" strokeWidth="1.2"/><path d="M5 1V4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/><path d="M11 1V4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+            </button>
+            <input
+              ref={endDateRef}
+              type="date"
+              value={endDate}
+              onChange={(e) => {
+                setEndDate(e.target.value);
+                setEndDateDisplay(e.target.value);
+                handleContextChange({ endDate: e.target.value });
+              }}
+              className="sr-only"
+              tabIndex={-1}
+            />
+          </div>
         </div>
       </div>
 
