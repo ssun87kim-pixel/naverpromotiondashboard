@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import type { PromotionRecord, KpiSummary, DailyTimeSeries, ProductRow } from '../types/index';
+import { countDays } from '../utils/format';
 
 // ============================================================
 // 타입 정의
@@ -80,12 +81,7 @@ function addEventSheets(
   XLSX.utils.book_append_sheet(wb, ws1, safeSheetName(`${prefix}_컨텍스트`));
 
   // ── KPI 시트 ──
-  const eventDays = (() => {
-    const s = new Date(ctx.startDate);
-    const e = new Date(ctx.endDate);
-    const diff = e.getTime() - s.getTime();
-    return Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)) + 1);
-  })();
+  const eventDays = countDays(ctx.startDate, ctx.endDate);
   const dailyAvgNetSales = Math.round(kpis.netSales / eventDays);
 
   const liveDays = event.timeSeries.filter((d) => d.isLiveDate);

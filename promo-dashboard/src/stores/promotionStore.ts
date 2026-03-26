@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { normalizeDate } from '../utils/format';
 import {
   parseSalesPerformance,
   parseProductPerformance,
@@ -142,7 +143,10 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
       while (updated.length <= index) {
         updated.push(blank);
       }
-      updated[index] = { ...updated[index], ...patch };
+      const normalized = { ...patch };
+      if (normalized.startDate) normalized.startDate = normalizeDate(normalized.startDate);
+      if (normalized.endDate) normalized.endDate = normalizeDate(normalized.endDate);
+      updated[index] = { ...updated[index], ...normalized };
       return { compareContexts: updated, isDirty: true };
     });
   },

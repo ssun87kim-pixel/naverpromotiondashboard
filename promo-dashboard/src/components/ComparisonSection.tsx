@@ -1,7 +1,7 @@
 import React from 'react';
 import KpiCard from './KpiCard';
 import type { KpiSummary, PromotionRecord, DailyTimeSeries } from '../types/index';
-import { formatCurrency, formatRate, formatNumber } from '../utils/format';
+import { formatCurrency, formatRate, formatNumber, countDays } from '../utils/format';
 
 interface ParsedInfo {
   hasSales: boolean;
@@ -96,12 +96,6 @@ function getKpiStatus(row: KpiRow, kpis: KpiSummary | null, parsed: ParsedInfo):
   return row.getStatus(kpis);
 }
 
-function countDays(startDate: string, endDate: string): number {
-  const s = new Date(startDate);
-  const e = new Date(endDate);
-  const diff = e.getTime() - s.getTime();
-  return Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)) + 1);
-}
 
 interface ColumnProps {
   title: string;
