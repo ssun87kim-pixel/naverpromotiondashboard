@@ -72,11 +72,11 @@ const DownloadButtons: React.FC<DownloadButtonsProps> = ({
         onClick={handleExcelDownload}
         disabled={isDisabled || excelLoading}
         className={[
-          'flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-gray-200',
+          'flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border font-medium shadow-sm',
           'transition-colors',
           isDisabled || excelLoading
-            ? 'opacity-40 cursor-not-allowed bg-white text-gray-400'
-            : 'bg-white text-gray-700 hover:bg-gray-50 cursor-pointer',
+            ? 'opacity-40 cursor-not-allowed bg-emerald-600 border-emerald-600 text-white'
+            : 'bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700 cursor-pointer',
         ].join(' ')}
         aria-label="엑셀 다운로드"
         data-testid="download-excel"
@@ -95,11 +95,11 @@ const DownloadButtons: React.FC<DownloadButtonsProps> = ({
         onClick={handlePdfDownload}
         disabled={isDisabled || pdfLoading}
         className={[
-          'flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-gray-200',
+          'flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border font-medium shadow-sm',
           'transition-colors',
           isDisabled || pdfLoading
-            ? 'opacity-40 cursor-not-allowed bg-white text-gray-400'
-            : 'bg-white text-gray-700 hover:bg-gray-50 cursor-pointer',
+            ? 'opacity-40 cursor-not-allowed bg-red border-red text-white'
+            : 'bg-red border-red text-white hover:brightness-90 cursor-pointer',
         ].join(' ')}
         aria-label="PDF 다운로드"
         data-testid="download-pdf"

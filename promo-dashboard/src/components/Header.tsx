@@ -7,7 +7,7 @@ const Header: React.FC = () => {
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-      <h1 className="text-xl font-bold text-gray-900">네이버 프로모션 성과 대시보드</h1>
+      <h1 className="text-xl font-bold text-gray-900">네이버 프로모션성과 대시보드 (DB 연동 전 버전, 모든 사업부 사용 가능)</h1>
 
       <button
         type="button"

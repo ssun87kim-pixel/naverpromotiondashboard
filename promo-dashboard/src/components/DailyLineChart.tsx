@@ -88,9 +88,9 @@ const DailyLineChart: React.FC<DailyLineChartProps> = ({ data, liveDates, onDayC
                 key={ld}
                 x={entry.xLabel}
                 yAxisId="amount"
-                stroke="#336DFF"
+                stroke="#DC2626"
                 strokeDasharray="4 4"
-                label={{ value: 'LIVE', position: 'top', fill: '#336DFF', fontSize: 11 }}
+                label={{ value: 'LIVE', position: 'top', fill: '#DC2626', fontSize: 11 }}
               />
             );
           })}
@@ -133,7 +133,7 @@ const DailyLineChart: React.FC<DailyLineChartProps> = ({ data, liveDates, onDayC
             type="monotone"
             dataKey="couponTotal"
             name="쿠폰합계"
-            stroke="#336DFF"
+            stroke="#DC2626"
             strokeWidth={2}
             dot={false}
             activeDot={{ r: 4 }}
