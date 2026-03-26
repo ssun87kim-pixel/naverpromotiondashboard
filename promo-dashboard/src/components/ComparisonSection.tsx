@@ -229,7 +229,7 @@ const ComparisonSection: React.FC<ComparisonSectionProps> = ({
   return (
     <section className="bg-white border border-gray-200 rounded-lg p-6">
       <h2 className="text-base font-bold text-gray-900 mb-4">행사 비교</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* 이번 행사 */}
         <ComparisonColumn
           title={currentContext?.eventName || '이번 행사'}
@@ -241,10 +241,10 @@ const ComparisonSection: React.FC<ComparisonSectionProps> = ({
           colTimeSeries={currentTimeSeries}
         />
 
-        {/* 비교 행사 1 */}
+        {/* 비교 행사 */}
         {compareKpis[0] !== undefined && (
           <ComparisonColumn
-            title={compareContexts[0]?.eventName || '비교 행사 1'}
+            title={compareContexts[0]?.eventName || '비교 행사'}
             subtitle={
               compareContexts[0]?.startDate && compareContexts[0]?.endDate
                 ? `${compareContexts[0].startDate} ~ ${compareContexts[0].endDate}`
@@ -255,23 +255,6 @@ const ComparisonSection: React.FC<ComparisonSectionProps> = ({
             context={compareContexts[0] ?? null}
             colTimeSeries={compareTimeSeries[0] ?? []}
             onClose={() => onClose(0)}
-          />
-        )}
-
-        {/* 비교 행사 2 */}
-        {compareKpis[1] !== undefined && (
-          <ComparisonColumn
-            title={compareContexts[1]?.eventName || '비교 행사 2'}
-            subtitle={
-              compareContexts[1]?.startDate && compareContexts[1]?.endDate
-                ? `${compareContexts[1].startDate} ~ ${compareContexts[1].endDate}`
-                : undefined
-            }
-            kpis={compareKpis[1]}
-            parsed={compareParsed[1] ?? EMPTY_PARSED}
-            context={compareContexts[1] ?? null}
-            colTimeSeries={compareTimeSeries[1] ?? []}
-            onClose={() => onClose(1)}
           />
         )}
       </div>

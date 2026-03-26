@@ -140,7 +140,7 @@ const FileUploadPanel: React.FC<Props> = ({ onFilesChange }) => {
     <div className="space-y-4">
       <UploadZone
         label="판매성과"
-        hint="네이버 어드민 > 데이터분석 > 판매성과 > 엑셀 다운"
+        hint="네이버 어드민 > 데이터분석 > 판매분석 > 판매성과 > 엑셀 다운"
         required
         file={files.sales}
         error={errors.sales}

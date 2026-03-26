@@ -107,9 +107,21 @@ function App() {
     removeCompare(index);
   };
 
+  const compareProductRowsStore = usePromotionStore((s) => s.compareProductRows);
+
   const reportData: ReportData | null =
     kpis && context
-      ? { context, kpis, timeSeries, productRows }
+      ? {
+          context, kpis, timeSeries, productRows,
+          compareEvents: compareKpis
+            .map((ck, i) => ck ? {
+              context: compareContexts[i],
+              kpis: ck,
+              timeSeries: compareTimeSeries[i] ?? [],
+              productRows: compareProductRowsStore[i] ?? [],
+            } : null)
+            .filter((e): e is NonNullable<typeof e> => e !== null),
+        }
       : null;
 
   return (
@@ -176,27 +188,14 @@ function App() {
                     }}
                   />
                 )}
-                {compareSlots >= 2 && (
-                  <CompareEventUpload
-                    index={1}
-                    onFilesChange={(files) => {
-                      if (files.sales) setCompareFile(1, 'sales', files.sales);
-                      if (files.products) setCompareFile(1, 'products', files.products);
-                      if (files.category) setCompareFile(1, 'category', files.category);
-                    }}
-                    onContextChange={(ctx) => {
-                      setCompareContext(1, ctx);
-                    }}
-                  />
-                )}
-                {compareSlots < 2 && (
+                {compareSlots < 1 && (
                   <button
                     type="button"
-                    onClick={() => setCompareSlots((prev) => prev + 1)}
+                    onClick={() => setCompareSlots(1)}
                     className="w-full flex items-center justify-center gap-1.5 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors"
                   >
                     <span className="text-lg leading-none">+</span>
-                    <span>비교 행사 추가 {compareSlots === 0 ? '' : '(최대 2개)'}</span>
+                    <span>비교 행사 추가</span>
                   </button>
                 )}
               </div>

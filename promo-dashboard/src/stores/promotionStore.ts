@@ -35,7 +35,7 @@ type ParsedEntry = {
 interface PromotionStore {
   // 입력 상태
   context: PromotionRecord | null;
-  compareContexts: PromotionRecord[]; // 최대 2개
+  compareContexts: PromotionRecord[]; // 최대 1개
 
   // 파일 업로드 상태
   currentFiles: FileSet;
@@ -122,7 +122,7 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
   addCompareContext: (ctx) => {
     set((state) => {
       const updated = [...state.compareContexts];
-      if (updated.length < 2) {
+      if (updated.length < 1) {
         updated.push(ctx);
       } else {
         updated[updated.length - 1] = ctx;

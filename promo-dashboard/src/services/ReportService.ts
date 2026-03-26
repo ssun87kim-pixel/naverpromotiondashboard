@@ -5,11 +5,19 @@ import type { PromotionRecord, KpiSummary, DailyTimeSeries, ProductRow } from '.
 // 타입 정의
 // ============================================================
 
+export interface EventData {
+  context: PromotionRecord;
+  kpis: KpiSummary;
+  timeSeries: DailyTimeSeries[];
+  productRows: ProductRow[];
+}
+
 export interface ReportData {
   context: PromotionRecord;
   kpis: KpiSummary;
   timeSeries: DailyTimeSeries[];
   productRows: ProductRow[];
+  compareEvents?: EventData[];
 }
 
 // ============================================================
@@ -44,122 +52,118 @@ function applyNumberFormat(
 // 엑셀 다운로드
 // ============================================================
 
-export async function exportExcel(data: ReportData): Promise<void> {
-  try {
-    const wb = XLSX.utils.book_new();
+/** 시트 이름을 31자 이내로 자르고 금지 문자 제거 */
+function safeSheetName(name: string): string {
+  return name.replace(/[\\/*?[\]:]/g, '').slice(0, 31);
+}
 
-    // ── 시트 1: 행사 컨텍스트 ──────────────────────────────
-    const ctx = data.context;
-    const sheet1Data = [
-      ['항목', '내용'],
-      ['행사명', ctx.eventName],
-      ['기간', `${ctx.startDate} ~ ${ctx.endDate}`],
-      ['기획의도', ctx.planningIntent],
-      ['매출목표', ctx.targetAmount],
-    ];
-    const ws1 = XLSX.utils.aoa_to_sheet(sheet1Data);
-    applyNumberFormat(ws1, 1, 4, 4, '#,##0'); // 매출목표 (B5)
-    ws1['!cols'] = [{ wch: 16 }, { wch: 40 }];
-    XLSX.utils.book_append_sheet(wb, ws1, '행사 컨텍스트');
+/** 한 행사분의 시트 4개를 workbook에 추가 */
+function addEventSheets(
+  wb: XLSX.WorkBook,
+  prefix: string,
+  event: EventData,
+): void {
+  const ctx = event.context;
+  const kpis = event.kpis;
 
-    // ── 시트 2: KPI 수치 ───────────────────────────────────
-    const kpis = data.kpis;
-    // 일평균 순매출 계산
-    const eventDays = (() => {
-      const s = new Date(ctx.startDate);
-      const e = new Date(ctx.endDate);
-      const diff = e.getTime() - s.getTime();
-      return Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)) + 1);
-    })();
-    const dailyAvgNetSales = Math.round(kpis.netSales / eventDays);
+  // ── 컨텍스트 시트 ──
+  const sheet1Data = [
+    ['항목', '내용'],
+    ['행사명', ctx.eventName],
+    ['기간', `${ctx.startDate} ~ ${ctx.endDate}`],
+    ['기획의도', ctx.planningIntent],
+    ['매출목표', ctx.targetAmount],
+  ];
+  const ws1 = XLSX.utils.aoa_to_sheet(sheet1Data);
+  applyNumberFormat(ws1, 1, 4, 4, '#,##0');
+  ws1['!cols'] = [{ wch: 16 }, { wch: 40 }];
+  XLSX.utils.book_append_sheet(wb, ws1, safeSheetName(`${prefix}_컨텍스트`));
 
-    // 라이브일자 순매출
-    const liveDays = data.timeSeries.filter((d) => d.isLiveDate);
-    const liveDayRows: (string | number)[][] = [];
-    if (liveDays.length === 1) {
-      liveDayRows.push(['라이브 순매출', liveDays[0].netSales]);
-    } else if (liveDays.length >= 2) {
-      const liveTotal = liveDays.reduce((sum, d) => sum + d.netSales, 0);
-      liveDayRows.push(['라이브 합계', liveTotal]);
-      liveDays.forEach((d, i) => {
-        liveDayRows.push([`라이브 ${i + 1}일차 (${d.date.slice(5)})`, d.netSales]);
-      });
-    }
+  // ── KPI 시트 ──
+  const eventDays = (() => {
+    const s = new Date(ctx.startDate);
+    const e = new Date(ctx.endDate);
+    const diff = e.getTime() - s.getTime();
+    return Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)) + 1);
+  })();
+  const dailyAvgNetSales = Math.round(kpis.netSales / eventDays);
 
-    const sheet2Data: (string | number | null)[][] = [
-      ['레이블', '값'],
-      ['최종결제액(Net Sales)', kpis.netSales],
-      ['달성률', kpis.achievementRate !== null ? kpis.achievementRate / 100 : null],
-      ['결제금액', kpis.paymentAmount],
-      ['결제수', kpis.paymentCount],
-      ['객단가', kpis.avgOrderValue],
-      ['쿠폰합계', kpis.couponTotal],
-      ['환불액', kpis.refundAmount],
-      ['환불율', kpis.refundRate / 100],
-      ['일평균 순매출', dailyAvgNetSales],
-      ...liveDayRows,
-    ];
-    const ws2 = XLSX.utils.aoa_to_sheet(sheet2Data);
-    const sheet2LastRow = sheet2Data.length - 1;
-    // 금액/수량 행: row 1,3,4,5,6,7,9~ (0-indexed)
-    for (const r of [1, 3, 4, 5, 6, 7]) {
-      applyNumberFormat(ws2, 1, r, r, '#,##0');
-    }
-    // 일평균 순매출 + 라이브일자 순매출 (row 9~)
-    for (let r = 9; r <= sheet2LastRow; r++) {
-      applyNumberFormat(ws2, 1, r, r, '#,##0');
-    }
-    // 백분율 행: row 2(달성률), 8(환불율)
-    for (const r of [2, 8]) {
-      applyNumberFormat(ws2, 1, r, r, '0.0%');
-    }
-    ws2['!cols'] = [{ wch: 24 }, { wch: 20 }];
-    XLSX.utils.book_append_sheet(wb, ws2, 'KPI 수치');
+  const liveDays = event.timeSeries.filter((d) => d.isLiveDate);
+  const liveDayRows: (string | number)[][] = [];
+  if (liveDays.length === 1) {
+    liveDayRows.push(['라이브 순매출', liveDays[0].netSales]);
+  } else if (liveDays.length >= 2) {
+    const liveTotal = liveDays.reduce((sum, d) => sum + d.netSales, 0);
+    liveDayRows.push(['라이브 합계', liveTotal]);
+    liveDays.forEach((d, i) => {
+      liveDayRows.push([`라이브 ${i + 1}일차 (${d.date.slice(5)})`, d.netSales]);
+    });
+  }
 
-    // ── 시트 3: 일별 판매성과 ──────────────────────────────
+  const sheet2Data: (string | number | null)[][] = [
+    ['레이블', '값'],
+    ['최종결제액(Net Sales)', kpis.netSales],
+    ['달성률', kpis.achievementRate !== null ? kpis.achievementRate / 100 : null],
+    ['결제금액', kpis.paymentAmount],
+    ['결제수', kpis.paymentCount],
+    ['객단가', kpis.avgOrderValue],
+    ['쿠폰합계', kpis.couponTotal],
+    ['환불액', kpis.refundAmount],
+    ['환불율', kpis.refundRate / 100],
+    ['일평균 순매출', dailyAvgNetSales],
+    ...liveDayRows,
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(sheet2Data);
+  const sheet2LastRow = sheet2Data.length - 1;
+  for (const r of [1, 3, 4, 5, 6, 7]) {
+    applyNumberFormat(ws2, 1, r, r, '#,##0');
+  }
+  for (let r = 9; r <= sheet2LastRow; r++) {
+    applyNumberFormat(ws2, 1, r, r, '#,##0');
+  }
+  for (const r of [2, 8]) {
+    applyNumberFormat(ws2, 1, r, r, '0.0%');
+  }
+  ws2['!cols'] = [{ wch: 24 }, { wch: 20 }];
+  XLSX.utils.book_append_sheet(wb, ws2, safeSheetName(`${prefix}_KPI`));
+
+  // ── 일별 판매성과 시트 ──
+  if (event.timeSeries.length > 0) {
     const sheet3Header = ['날짜', '요일', '결제금액', '환불금액', '최종결제액', '쿠폰합계'];
-    const sheet3Rows = data.timeSeries.map((row) => [
-      row.date,
-      row.dayOfWeek,
-      row.paymentAmount,
-      row.refundAmount,
-      row.netSales,
-      row.couponTotal,
+    const sheet3Rows = event.timeSeries.map((row) => [
+      row.date, row.dayOfWeek,
+      row.paymentAmount, row.refundAmount, row.netSales, row.couponTotal,
     ]);
     const ws3 = XLSX.utils.aoa_to_sheet([sheet3Header, ...sheet3Rows]);
-    const sheet3LastRow = data.timeSeries.length; // 데이터 행 수 (헤더 제외)
-    for (const c of [2, 3, 4, 5]) { // 결제금액~쿠폰합계 (col C~F)
+    const sheet3LastRow = event.timeSeries.length;
+    for (const c of [2, 3, 4, 5]) {
       applyNumberFormat(ws3, c, 1, sheet3LastRow, '#,##0');
     }
     ws3['!cols'] = [
       { wch: 14 }, { wch: 6 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 },
     ];
-    XLSX.utils.book_append_sheet(wb, ws3, '일별 판매성과');
+    XLSX.utils.book_append_sheet(wb, ws3, safeSheetName(`${prefix}_일별`));
+  }
 
-    // ── 시트 4: 상품별 성과 ────────────────────────────────
+  // ── 상품별 성과 시트 ──
+  if (event.productRows.length > 0) {
     const sheet4Header = [
       '구분', '대분류', '상품명',
       '판매수량', '수량비중',
       '결제금액', '금액비중',
       '환불율',
     ];
-    const sheet4Rows = data.productRows.map((row) => [
-      row.division,
-      row.largeCat,
-      row.productName,
-      row.qty,
-      row.qtyShare / 100,      // 백분율 → 소수 (엑셀 % 서식용)
-      row.netAmount,
-      row.amountShare / 100,   // 백분율 → 소수
-      row.refundRate / 100,    // 백분율 → 소수
+    const sheet4Rows = event.productRows.map((row) => [
+      row.division, row.largeCat, row.productName,
+      row.qty, row.qtyShare / 100,
+      row.netAmount, row.amountShare / 100,
+      row.refundRate / 100,
     ]);
     const ws4 = XLSX.utils.aoa_to_sheet([sheet4Header, ...sheet4Rows]);
-    const sheet4LastRow = data.productRows.length;
-    // 숫자 쉼표: 판매수량(col 3), 결제금액(col 5)
+    const sheet4LastRow = event.productRows.length;
     for (const c of [3, 5]) {
       applyNumberFormat(ws4, c, 1, sheet4LastRow, '#,##0');
     }
-    // 백분율: 수량비중(col 4), 금액비중(col 6), 환불율(col 7)
     for (const c of [4, 6, 7]) {
       applyNumberFormat(ws4, c, 1, sheet4LastRow, '0.0%');
     }
@@ -169,10 +173,31 @@ export async function exportExcel(data: ReportData): Promise<void> {
       { wch: 16 }, { wch: 12 },
       { wch: 10 },
     ];
-    XLSX.utils.book_append_sheet(wb, ws4, '상품별 성과');
+    XLSX.utils.book_append_sheet(wb, ws4, safeSheetName(`${prefix}_상품`));
+  }
+}
+
+export async function exportExcel(data: ReportData): Promise<void> {
+  try {
+    const wb = XLSX.utils.book_new();
+
+    // 이번 행사 시트
+    addEventSheets(wb, data.context.eventName, {
+      context: data.context,
+      kpis: data.kpis,
+      timeSeries: data.timeSeries,
+      productRows: data.productRows,
+    });
+
+    // 비교 행사 시트
+    if (data.compareEvents) {
+      for (const compareEvent of data.compareEvents) {
+        addEventSheets(wb, compareEvent.context.eventName, compareEvent);
+      }
+    }
 
     // ── 파일 저장 ──────────────────────────────────────────
-    const filename = `${ctx.eventName}_성과분석_${getTodayStr()}.xlsx`;
+    const filename = `${data.context.eventName}_성과분석_${getTodayStr()}.xlsx`;
     XLSX.writeFile(wb, filename);
   } catch {
     throw new Error('파일 생성에 실패했습니다. 다시 시도해주세요.');

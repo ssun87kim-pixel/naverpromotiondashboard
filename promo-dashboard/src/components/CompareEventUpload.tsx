@@ -310,7 +310,7 @@ const CompareEventUpload: React.FC<Props> = ({ index, onFilesChange, onContextCh
       <div className="space-y-2">
         <MiniUploadZone
           label="판매성과"
-          hint="네이버 어드민 > 데이터분석 > 판매성과 > 엑셀 다운"
+          hint="네이버 어드민 > 데이터분석 > 판매분석 > 판매성과 > 엑셀 다운"
           file={files.sales}
           error={fileErrors.sales}
           onFile={handleFile('sales')}
