@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import type { PromotionRecord } from '../types/index';
 import LiveDatesInput from './LiveDatesInput';
+import { formatNumber } from '../utils/format';
 
 interface FileSet {
   sales?: File;
@@ -23,6 +24,7 @@ function isValidExtension(file: File): boolean {
 
 interface MiniUploadZoneProps {
   label: string;
+  hint?: string;
   required?: boolean;
   file?: File;
   error?: string;
@@ -32,6 +34,7 @@ interface MiniUploadZoneProps {
 
 const MiniUploadZone: React.FC<MiniUploadZoneProps> = ({
   label,
+  hint,
   required,
   file,
   error,
@@ -56,10 +59,13 @@ const MiniUploadZone: React.FC<MiniUploadZoneProps> = ({
 
   return (
     <div>
-      <p className="text-xs font-medium text-gray-600 mb-1">
-        {label}
-        {required && <span className="text-red ml-1">*</span>}
-      </p>
+      <div className="flex items-baseline gap-2 mb-1">
+        <p className="text-xs font-medium text-gray-600">
+          {label}
+          {required && <span className="text-red ml-1">*</span>}
+        </p>
+        {hint && <span className="text-xs text-gray-400">다운로드: {hint}</span>}
+      </div>
 
       {file ? (
         <div className="flex items-center justify-between px-2 py-1.5 border border-gray-200 rounded-lg bg-gray-50">
@@ -119,6 +125,8 @@ const CompareEventUpload: React.FC<Props> = ({ index, onFilesChange, onContextCh
   const [startDateDisplay, setStartDateDisplay] = useState('');
   const [endDate, setEndDate] = useState('');
   const [endDateDisplay, setEndDateDisplay] = useState('');
+  const [targetAmount, setTargetAmount] = useState(0);
+  const [targetAmountDisplay, setTargetAmountDisplay] = useState('');
   const [liveDates, setLiveDates] = useState<string[]>([]);
   const startDateRef = useRef<HTMLInputElement>(null);
   const endDateRef = useRef<HTMLInputElement>(null);
@@ -262,6 +270,30 @@ const CompareEventUpload: React.FC<Props> = ({ index, onFilesChange, onContextCh
         </div>
       </div>
 
+      {/* 매출 목표 금액 */}
+      <div>
+        <p className="text-xs font-medium text-gray-600 mb-1">매출 목표 금액</p>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={targetAmountDisplay}
+          onChange={(e) => {
+            const raw = e.target.value.replace(/,/g, '');
+            if (raw === '' || /^\d+$/.test(raw)) {
+              const num = raw === '' ? 0 : parseInt(raw, 10);
+              setTargetAmount(num);
+              setTargetAmountDisplay(raw === '' ? '' : formatNumber(num));
+              handleContextChange({ targetAmount: num });
+            }
+          }}
+          onBlur={() => {
+            if (targetAmount > 0) setTargetAmountDisplay(formatNumber(targetAmount));
+          }}
+          placeholder="0"
+          className={inputClass}
+        />
+      </div>
+
       {/* 라이브 진행일자 */}
       <div>
         <p className="text-xs font-medium text-gray-600 mb-1">라이브 진행일자</p>
@@ -278,6 +310,7 @@ const CompareEventUpload: React.FC<Props> = ({ index, onFilesChange, onContextCh
       <div className="space-y-2">
         <MiniUploadZone
           label="판매성과"
+          hint="네이버 어드민 > 데이터분석 > 판매성과 > 엑셀 다운"
           file={files.sales}
           error={fileErrors.sales}
           onFile={handleFile('sales')}
@@ -285,6 +318,7 @@ const CompareEventUpload: React.FC<Props> = ({ index, onFilesChange, onContextCh
         />
         <MiniUploadZone
           label="상품성과"
+          hint="네이버 어드민 > 데이터분석 > 판매분석 > 상품성과 > 엑셀 다운"
           file={files.products}
           error={fileErrors.products}
           onFile={handleFile('products')}
@@ -292,6 +326,7 @@ const CompareEventUpload: React.FC<Props> = ({ index, onFilesChange, onContextCh
         />
         <MiniUploadZone
           label="카테고리 (선택)"
+          hint="온라인 견적서 엑셀 시트"
           file={files.category}
           error={fileErrors.category}
           onFile={handleFile('category')}

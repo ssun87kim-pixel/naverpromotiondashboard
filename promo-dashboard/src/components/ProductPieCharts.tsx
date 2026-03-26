@@ -1,6 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import type { ProductRow } from '../types/index';
+import { formatCurrency } from '../utils/format';
 
 interface ProductPieChartsProps {
   rows: ProductRow[];
@@ -58,7 +59,7 @@ const renderCustomLabel = (data: PieEntry[]) => {
     const { cx = 0, name = '', value = 0, x = 0, y = 0 } = props;
     if (!top4.includes(name)) return null;
     const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
-    const shortName = name.length > 7 ? name.slice(0, 7) + '…' : name;
+    const shortName = name.length > 5 ? name.slice(0, 5) + '…' : name;
     const anchor = x > cx ? 'start' : 'end';
     return (
       <text
@@ -79,21 +80,40 @@ const renderCustomLabel = (data: PieEntry[]) => {
 interface SinglePieProps {
   title: string;
   data: PieEntry[];
+  isAmount?: boolean;
   onSliceClick?: (name: string) => void;
 }
 
-const SinglePie: React.FC<SinglePieProps> = ({ title, data, onSliceClick }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CustomTooltip = ({ active, payload, isAmount }: { active?: boolean; payload?: any[]; isAmount?: boolean }) => {
+  if (!active || !payload?.[0]) return null;
+  const { name, value } = payload[0].payload as PieEntry;
+  const total = payload[0].payload._total as number;
+  const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg shadow-sm px-3 py-2 text-xs">
+      <p className="font-semibold text-gray-900">{name}</p>
+      <p className="text-gray-600">{isAmount ? formatCurrency(value) : value.toLocaleString()}</p>
+      <p className="text-gray-500">비중 {pct}%</p>
+    </div>
+  );
+};
+
+const SinglePie: React.FC<SinglePieProps> = ({ title, data, isAmount, onSliceClick }) => {
   const customLabel = renderCustomLabel(data);
+  const total = data.reduce((s, d) => s + d.value, 0);
+  const dataWithTotal = data.map(d => ({ ...d, _total: total }));
+
   return (
     <div className="flex flex-col items-center gap-2 flex-1 min-w-0">
       <span className="text-sm font-medium text-gray-700">{title}</span>
-      <ResponsiveContainer width="100%" height={340}>
-        <PieChart>
+      <ResponsiveContainer width="100%" height={300}>
+        <PieChart margin={{ top: 20, right: 40, bottom: 20, left: 40 }}>
           <Pie
-            data={data}
+            data={dataWithTotal}
             cx="50%"
             cy="50%"
-            outerRadius={85}
+            outerRadius={75}
             dataKey="value"
             label={customLabel}
             labelLine={{ stroke: '#B3B3B3', strokeWidth: 1 }}
@@ -104,7 +124,7 @@ const SinglePie: React.FC<SinglePieProps> = ({ title, data, onSliceClick }) => {
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip formatter={(value: number) => [value.toLocaleString(), '']} />
+          <Tooltip content={<CustomTooltip isAmount={isAmount} />} />
         </PieChart>
       </ResponsiveContainer>
     </div>
@@ -143,6 +163,7 @@ const ProductPieCharts: React.FC<ProductPieChartsProps> = ({
         <SinglePie
           title="결제금액 비중"
           data={amount}
+          isAmount
           onSliceClick={handleSliceClick}
         />
       </div>

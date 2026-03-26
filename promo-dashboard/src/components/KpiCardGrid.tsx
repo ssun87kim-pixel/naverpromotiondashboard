@@ -73,8 +73,18 @@ const KpiCardGrid: React.FC<KpiCardGridProps> = ({ kpis, targetAmount: _targetAm
   // 2행 그리드 컬럼 수를 1행과 동일하게 맞춤
   const gridCols = row1.length;
 
+  const eventLabel = context?.eventName || '이번 행사';
+  const periodLabel = context?.startDate && context?.endDate
+    ? `${context.startDate} ~ ${context.endDate}`
+    : '';
+
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 bg-white border border-gray-200 rounded-lg p-4">
+      {/* 행사명 + 기간 */}
+      <div className="flex items-baseline gap-2 border-l-4 border-blue pl-2">
+        <span className="text-sm font-semibold text-gray-800">{eventLabel}</span>
+        {periodLabel && <span className="text-xs text-gray-500">{periodLabel}</span>}
+      </div>
       {/* 1행 */}
       {row1.length > 0 && (
         <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}>

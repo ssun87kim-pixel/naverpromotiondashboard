@@ -66,6 +66,7 @@ interface PromotionStore {
   // Actions
   setContext: (ctx: PromotionRecord) => void;
   addCompareContext: (ctx: PromotionRecord) => void;
+  setCompareContext: (index: number, ctx: Partial<PromotionRecord>) => void;
   setCurrentFile: (type: 'sales' | 'products' | 'category', file: File) => void;
   setCompareFile: (
     index: number,
@@ -124,9 +125,24 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
       if (updated.length < 2) {
         updated.push(ctx);
       } else {
-        // 최대 2개 — 마지막 항목 교체
         updated[updated.length - 1] = ctx;
       }
+      return { compareContexts: updated, isDirty: true };
+    });
+  },
+
+  setCompareContext: (index, patch) => {
+    set((state) => {
+      const updated = [...state.compareContexts];
+      const blank: PromotionRecord = {
+        id: `compare-${index}`, eventName: '', channel: 'naver', startDate: '', endDate: '',
+        liveDates: [], targetAmount: 0, promotionType: '', planningIntent: '',
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      };
+      while (updated.length <= index) {
+        updated.push(blank);
+      }
+      updated[index] = { ...updated[index], ...patch };
       return { compareContexts: updated, isDirty: true };
     });
   },

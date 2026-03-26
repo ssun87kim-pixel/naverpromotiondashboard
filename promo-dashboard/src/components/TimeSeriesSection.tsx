@@ -33,11 +33,18 @@ const EventBlock: React.FC<EventBlockProps> = ({
     ? computeHourly(salesData, drillDownDate)
     : hourlyData;
 
+  const periodLabel = context?.startDate && context?.endDate
+    ? `${context.startDate} ~ ${context.endDate}`
+    : '';
+
   if (timeSeries.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-4">
-      <p className="text-sm font-semibold text-gray-800 border-l-4 border-blue pl-2">{label}</p>
+    <div className="flex flex-col gap-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
+      <div className="flex items-baseline gap-2 border-l-4 border-blue pl-2">
+        <span className="text-sm font-semibold text-gray-800">{label}</span>
+        {periodLabel && <span className="text-xs text-gray-500">{periodLabel}</span>}
+      </div>
 
       {weekdayData.length > 0 && (
         <div>
@@ -91,7 +98,7 @@ const TimeSeriesSection: React.FC = () => {
 
       {/* 이번 행사 */}
       <EventBlock
-        label="이번 행사"
+        label={context?.eventName || '이번 행사'}
         timeSeries={timeSeries}
         hourlyData={hourlyData}
         salesData={parsedData?.current?.sales}

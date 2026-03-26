@@ -29,7 +29,7 @@ function App() {
     compareTimeSeries,
     setContext,
     setCompareFile,
-    addCompareContext,
+    setCompareContext,
     removeCompare,
     analyze,
     toggleInputPanel,
@@ -159,30 +159,6 @@ function App() {
                   <span className="text-blue mr-1">②</span>파일 업로드
                 </h2>
                 <FileUploadPanel onFilesChange={setCurrentFiles} />
-                {/* 분석 버튼 (파일 업로드 바로 아래) */}
-                <div className="mt-4">
-                  {analyzeError && (
-                    <p className="text-sm text-red mb-2" role="alert">{analyzeError}</p>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleAnalyze}
-                    disabled={!canAnalyze || isAnalyzing}
-                    className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium transition-opacity ${
-                      canAnalyze && !isAnalyzing
-                        ? 'bg-blue text-white hover:opacity-90'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    }`}
-                    data-testid="analyze-btn"
-                  >
-                    {isAnalyzing ? '분석 중...' : '분석 시작'}
-                  </button>
-                  {isAnalyzing && (
-                    <p className="text-xs text-gray-400 text-center mt-1">
-                      ESC 키를 눌러 분석을 중단할 수 있습니다
-                    </p>
-                  )}
-                </div>
               </div>
 
               {/* 비교 행사 업로드 (선택) */}
@@ -196,21 +172,7 @@ function App() {
                       if (files.category) setCompareFile(0, 'category', files.category);
                     }}
                     onContextChange={(ctx) => {
-                      if (ctx.eventName || ctx.startDate || ctx.endDate) {
-                        addCompareContext({
-                          id: `compare-0-${Date.now()}`,
-                          eventName: ctx.eventName ?? '',
-                          channel: 'naver',
-                          startDate: ctx.startDate ?? '',
-                          endDate: ctx.endDate ?? '',
-                          liveDates: ctx.liveDates ?? [],
-                          targetAmount: ctx.targetAmount ?? 0,
-                          promotionType: ctx.promotionType ?? '',
-                          planningIntent: ctx.planningIntent ?? '',
-                          createdAt: new Date().toISOString(),
-                          updatedAt: new Date().toISOString(),
-                        });
-                      }
+                      setCompareContext(0, ctx);
                     }}
                   />
                 )}
@@ -223,21 +185,7 @@ function App() {
                       if (files.category) setCompareFile(1, 'category', files.category);
                     }}
                     onContextChange={(ctx) => {
-                      if (ctx.eventName || ctx.startDate || ctx.endDate) {
-                        addCompareContext({
-                          id: `compare-1-${Date.now()}`,
-                          eventName: ctx.eventName ?? '',
-                          channel: 'naver',
-                          startDate: ctx.startDate ?? '',
-                          endDate: ctx.endDate ?? '',
-                          liveDates: ctx.liveDates ?? [],
-                          targetAmount: ctx.targetAmount ?? 0,
-                          promotionType: ctx.promotionType ?? '',
-                          planningIntent: ctx.planningIntent ?? '',
-                          createdAt: new Date().toISOString(),
-                          updatedAt: new Date().toISOString(),
-                        });
-                      }
+                      setCompareContext(1, ctx);
                     }}
                   />
                 )}
@@ -339,6 +287,12 @@ function App() {
       {/* 코멘트 사이드 패널 */}
       <CommentSidePanel isOpen={commentOpen} onClose={toggleComment} />
 
+      {/* 푸터 */}
+      <footer className="border-t border-gray-200 bg-white mt-8">
+        <div className="max-w-screen-xl mx-auto px-4 py-4 text-center text-xs text-gray-400">
+          제작 및 수정 문의: DESKER 김선영 (현재버전명: v2.1-compare-side-by-side)
+        </div>
+      </footer>
     </div>
   );
 }
