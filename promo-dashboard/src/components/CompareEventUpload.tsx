@@ -332,19 +332,19 @@ const CompareEventUpload: React.FC<Props> = ({ index, onFilesChange, onContextCh
           onFile={handleFile('category')}
           onRemove={handleRemove('category')}
         />
-        <div style={{ marginTop: 8, padding: '10px 12px', background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: 8 }} className="space-y-1.5">
-          <p className="text-xs font-bold" style={{ color: '#92400E' }}>★ 카테고리 파일 작성 시 주의사항</p>
-          <ul className="text-xs leading-relaxed list-disc pl-4 space-y-0.5" style={{ color: '#B45309' }}>
-            <li>첫 번째 행(헤더)에 반드시 <span className="font-bold" style={{ color: '#78350F' }}>구분, 대분류, 상품코드</span> 항목명 기입</li>
-            <li><span className="font-bold" style={{ color: '#78350F' }}>상품코드</span> 열에는 <span className="font-bold" style={{ color: '#78350F' }}>네이버 상품ID</span>를 입력 (상품성과 파일의 상품ID와 매칭)</li>
+        <div style={{ marginTop: 8, padding: '10px 12px', background: 'rgba(255,220,30,0.12)', border: '1px solid #FFDC1E', borderRadius: 8 }} className="space-y-1.5">
+          <p className="text-xs font-bold" style={{ color: '#282828' }}>★ 카테고리 파일 작성 시 주의사항</p>
+          <ul className="text-xs leading-relaxed list-disc pl-4 space-y-0.5" style={{ color: '#515151' }}>
+            <li>첫 번째 행(헤더)에 반드시 <span className="font-bold" style={{ color: '#282828' }}>구분, 대분류, 상품코드</span> 항목명 기입</li>
+            <li><span className="font-bold" style={{ color: '#282828' }}>상품코드</span> 열에는 <span className="font-bold" style={{ color: '#282828' }}>네이버 상품ID</span>를 입력 (상품성과 파일의 상품ID와 매칭)</li>
             <li>항목명이 다르면 인식되지 않아 <span className="font-semibold" style={{ color: '#F72B35' }}>전체 "미매칭" 처리</span>됩니다</li>
           </ul>
           <div className="flex items-start gap-1 pt-0.5">
-            <span className="text-xs shrink-0" style={{ color: '#D97706' }}>예시)</span>
-            <div className="flex gap-0 text-xs rounded overflow-hidden" style={{ border: '1px solid #FCD34D' }}>
-              <span className="px-1.5 py-0.5 font-semibold" style={{ background: '#FEF3C7', color: '#92400E', borderRight: '1px solid #FCD34D' }}>구분</span>
-              <span className="px-1.5 py-0.5 font-semibold" style={{ background: '#FEF3C7', color: '#92400E', borderRight: '1px solid #FCD34D' }}>대분류</span>
-              <span className="px-1.5 py-0.5 font-semibold" style={{ background: '#FEF3C7', color: '#92400E' }}>상품코드</span>
+            <span className="text-xs shrink-0" style={{ color: '#515151' }}>예시)</span>
+            <div className="flex gap-0 text-xs rounded overflow-hidden" style={{ border: '1px solid #FFDC1E' }}>
+              <span className="px-1.5 py-0.5 font-semibold" style={{ background: 'rgba(255,220,30,0.20)', color: '#282828', borderRight: '1px solid #FCD34D' }}>구분</span>
+              <span className="px-1.5 py-0.5 font-semibold" style={{ background: 'rgba(255,220,30,0.20)', color: '#282828', borderRight: '1px solid #FCD34D' }}>대분류</span>
+              <span className="px-1.5 py-0.5 font-semibold" style={{ background: 'rgba(255,220,30,0.20)', color: '#282828' }}>상품코드</span>
             </div>
           </div>
         </div>
