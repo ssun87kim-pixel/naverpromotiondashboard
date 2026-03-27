@@ -238,6 +238,7 @@ function App() {
             </div>
 
             <ErrorBoundary>
+              <div data-pdf-section>
               <KpiCardGrid
                 kpis={kpis}
                 targetAmount={context?.targetAmount ?? 0}
@@ -246,13 +247,17 @@ function App() {
                 context={context}
                 timeSeries={timeSeries}
               />
+              </div>
             </ErrorBoundary>
 
             <ErrorBoundary>
+              <div data-pdf-section>
               <TimeSeriesSection />
+              </div>
             </ErrorBoundary>
 
             <ErrorBoundary>
+              <div data-pdf-section>
               <ComparisonSection
                 currentKpis={kpis}
                 currentParsed={{ hasSales, hasProducts }}
@@ -270,10 +275,13 @@ function App() {
                   if (!inputPanelOpen) toggleInputPanel();
                 }}
               />
+              </div>
             </ErrorBoundary>
 
             <ErrorBoundary>
+              <div data-pdf-section data-pdf-newpage>
               <ProductSection />
+              </div>
             </ErrorBoundary>
 
             <ErrorBoundary>

@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
 import { usePromotionStore } from '../stores/promotionStore';
+
+const PdfCaptureNotice: React.FC = () => {
+  const pdfCaptureMode = usePromotionStore((s) => s.pdfCaptureMode);
+  if (!pdfCaptureMode) return null;
+  return (
+    <p className="text-sm text-gray-400 text-left mt-1 pb-4">
+      * PDF에서는 상품 성과가 구분 단위로 표시됩니다. 상세 내역은 엑셀 다운로드를 이용해주세요.
+    </p>
+  );
+};
 import ProductTable from './ProductTable';
 import ProductPieCharts from './ProductPieCharts';
 import type { ProductRow } from '../types/index';
@@ -89,6 +99,7 @@ const ProductSection: React.FC = () => {
       <section className="flex flex-col gap-6">
         <h2 className="text-base font-semibold text-gray-900">상품별 성과 분석</h2>
         {productRows.length > 0 && <ProductBlock label={currentLabel} period={currentPeriod} rows={productRows} />}
+        <PdfCaptureNotice />
       </section>
     );
   }
@@ -112,6 +123,7 @@ const ProductSection: React.FC = () => {
           <ProductBlock key={b.label} label={b.label} period={b.period} rows={b.rows} />
         ))}
       </div>
+      <PdfCaptureNotice />
     </section>
   );
 };

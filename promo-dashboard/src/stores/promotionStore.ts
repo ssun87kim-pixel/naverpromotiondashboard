@@ -61,6 +61,7 @@ interface PromotionStore {
   // UI 상태
   isDirty: boolean;
   inputPanelOpen: boolean;
+  pdfCaptureMode: boolean;
   drillDownDate: string | null;
   drillDownCategory: string | null;
 
@@ -79,6 +80,7 @@ interface PromotionStore {
   setDrillDownDate: (date: string | null) => void;
   setDrillDownCategory: (cat: string | null) => void;
   toggleInputPanel: () => void;
+  setPdfCaptureMode: (mode: boolean) => void;
   reset: () => void;
 }
 
@@ -105,6 +107,7 @@ const initialState = {
   productRows: [] as ProductRow[],
   isDirty: false,
   inputPanelOpen: true,
+  pdfCaptureMode: false,
   drillDownDate: null,
   drillDownCategory: null,
 };
@@ -342,6 +345,8 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
 
   toggleInputPanel: () =>
     set((state) => ({ inputPanelOpen: !state.inputPanelOpen })),
+
+  setPdfCaptureMode: (mode) => set({ pdfCaptureMode: mode }),
 
   reset: () => set({ ...initialState }),
 }));

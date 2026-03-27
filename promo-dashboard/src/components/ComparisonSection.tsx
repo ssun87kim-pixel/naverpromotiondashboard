@@ -2,6 +2,7 @@ import React from 'react';
 import KpiCard from './KpiCard';
 import type { KpiSummary, PromotionRecord, DailyTimeSeries } from '../types/index';
 import { formatCurrency, formatRate, formatNumber, countDays } from '../utils/format';
+import { usePromotionStore } from '../stores/promotionStore';
 
 interface ParsedInfo {
   hasSales: boolean;
@@ -136,8 +137,8 @@ const ComparisonColumn: React.FC<ColumnProps> = ({ title, subtitle, kpis, parsed
     <div className="flex flex-col gap-3 min-w-0 bg-gray-50 border border-gray-200 rounded-lg p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 border-l-4 border-blue pl-2">
-          <p className="text-sm font-bold text-gray-900 truncate">{title}</p>
-          {subtitle && <p className="text-xs text-gray-500 truncate">{subtitle}</p>}
+          <p className="text-sm font-bold text-gray-900">{title}</p>
+          {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
         </div>
         {onClose && (
           <button
@@ -187,6 +188,7 @@ const ComparisonSection: React.FC<ComparisonSectionProps> = ({
   onClose,
   onUpload,
 }) => {
+  const pdfCaptureMode = usePromotionStore((s) => s.pdfCaptureMode);
   const hasCompare = compareKpis.some((k) => k !== null);
 
   if (!hasCompare) {
@@ -203,6 +205,7 @@ const ComparisonSection: React.FC<ComparisonSectionProps> = ({
             context={currentContext}
             colTimeSeries={currentTimeSeries}
           />
+          {!pdfCaptureMode && (
           <div className="mt-6 flex flex-col items-center gap-3 py-6 border-t border-gray-100">
             <p className="text-sm text-gray-500">
               이전 행사 파일을 업로드하면 비교 분석이 가능합니다
@@ -215,6 +218,7 @@ const ComparisonSection: React.FC<ComparisonSectionProps> = ({
               파일 업로드
             </button>
           </div>
+          )}
         </div>
       </section>
     );

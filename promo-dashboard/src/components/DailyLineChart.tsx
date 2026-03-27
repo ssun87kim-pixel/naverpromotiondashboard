@@ -22,12 +22,12 @@ function formatXAxis(date: string, dayOfWeek: string): string {
 // 별표 커스텀 dot (Peak)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const PeakDot = (props: any) => {
-  const { cx, cy, payload } = props;
+  const { cx, cy, payload, index } = props;
   if (!payload?.isPeak || cx === undefined || cy === undefined) {
-    return <Dot cx={cx} cy={cy} r={0} fill="transparent" />;
+    return <Dot key={`peak-empty-${index}`} cx={cx} cy={cy} r={0} fill="transparent" />;
   }
   return (
-    <text x={cx} y={(cy ?? 0) - 10} textAnchor="middle" fontSize={16} fill="#282828">
+    <text key={`peak-${index}`} x={cx} y={(cy ?? 0) - 10} textAnchor="middle" fontSize={16} fill="#282828">
       ★
     </text>
   );

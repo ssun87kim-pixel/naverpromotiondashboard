@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { ProductRow } from '../types/index';
 import { formatNumber, formatCurrency, formatRate } from '../utils/format';
+import { usePromotionStore } from '../stores/promotionStore';
 
 interface ProductTableProps {
   rows: ProductRow[];
@@ -61,8 +62,13 @@ const ProductTable: React.FC<ProductTableProps> = ({
   sortKey,
   onSortChange,
 }) => {
+  const pdfCaptureMode = usePromotionStore((s) => s.pdfCaptureMode);
   const [openDivisions, setOpenDivisions] = useState<Set<string>>(new Set());
   const [openLargeCats, setOpenLargeCats] = useState<Set<string>>(new Set());
+
+  // PDF 캡처 중이면 모두 접힌 상태
+  const effectiveOpenDivisions = pdfCaptureMode ? new Set<string>() : openDivisions;
+  const effectiveOpenLargeCats = pdfCaptureMode ? new Set<string>() : openLargeCats;
 
   const toggleDivision = (div: string) => {
     setOpenDivisions((prev) => {
@@ -138,7 +144,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
               sortedDivisions.map((division) => {
                 const divRows = divisionMap.get(division)!;
                 const divSum = sumRows(divRows);
-                const isOpen = openDivisions.has(division);
+                const isOpen = effectiveOpenDivisions.has(division);
                 const largeCatMap = groupByLargeCat(divRows);
                 const sortedLargeCats = Array.from(largeCatMap.keys()).sort((a, b) => {
                   const aRows = largeCatMap.get(a)!;
@@ -173,7 +179,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                       const lcRows = largeCatMap.get(largeCat)!;
                       const lcSum = sumRows(lcRows);
                       const lcKey = `${division}__${largeCat}`;
-                      const isLcOpen = openLargeCats.has(lcKey);
+                      const isLcOpen = effectiveOpenLargeCats.has(lcKey);
                       const sortedProducts = sortRows(lcRows, sortKey);
 
                       return (
