@@ -224,6 +224,7 @@ const PROD_COL_ORDER_COUPON = ['주문쿠폰'];
 const PROD_COL_REFUND_CNT = ['환불건수'];
 const PROD_COL_REFUND_AMT = ['환불금액'];
 const PROD_COL_REFUND_QTY = ['환불수량'];
+const PROD_COL_REFUND_RATE = ['환불비율'];
 
 export async function parseProductPerformance(
   file: File
@@ -273,6 +274,7 @@ export async function parseProductPerformance(
   const refundCntCol = findColumnInHeaders(headers, PROD_COL_REFUND_CNT);
   const refundAmtCol = findColumnInHeaders(headers, PROD_COL_REFUND_AMT);
   const refundQtyCol = findColumnInHeaders(headers, PROD_COL_REFUND_QTY);
+  const refundRateCol = findColumnInHeaders(headers, PROD_COL_REFUND_RATE);
 
   const productRows: ProductRawRow[] = rows.map((r) => ({
     productId: String(r[idCol!] ?? ''),
@@ -289,6 +291,7 @@ export async function parseProductPerformance(
     refundCount: refundCntCol ? toNumber(r[refundCntCol]) : 0,
     refundAmount: refundAmtCol ? toNumber(r[refundAmtCol]) : 0,
     refundQty: refundQtyCol ? toNumber(r[refundQtyCol]) : 0,
+    ...(refundRateCol ? { refundRate: toNumber(r[refundRateCol]) } : {}),
   }));
 
   return { ok: true, data: { rows: productRows }, warnings: [] };

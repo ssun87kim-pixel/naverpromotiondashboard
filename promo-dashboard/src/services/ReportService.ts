@@ -1,6 +1,5 @@
 import * as XLSX from 'xlsx';
-import type { PromotionRecord, KpiSummary, DailyTimeSeries, ProductRow } from '../types/index';
-import { countDays } from '../utils/format';
+import type { PromotionRecord, KpiSummary, DailyTimeSeries, ProductRow, LiveDayResult } from '../types/index';
 
 // ============================================================
 // 타입 정의
@@ -11,6 +10,7 @@ export interface EventData {
   kpis: KpiSummary;
   timeSeries: DailyTimeSeries[];
   productRows: ProductRow[];
+  liveNetSales: LiveDayResult[];
 }
 
 export interface ReportData {
@@ -18,6 +18,7 @@ export interface ReportData {
   kpis: KpiSummary;
   timeSeries: DailyTimeSeries[];
   productRows: ProductRow[];
+  liveNetSales: LiveDayResult[];
   compareEvents?: EventData[];
 }
 
@@ -81,17 +82,16 @@ function addEventSheets(
   XLSX.utils.book_append_sheet(wb, ws1, safeSheetName(`${prefix}_컨텍스트`));
 
   // ── KPI 시트 ──
-  const eventDays = countDays(ctx.startDate, ctx.endDate);
-  const dailyAvgNetSales = Math.round(kpis.netSales / eventDays);
+  const datadays = event.timeSeries.length || 1;
+  const dailyAvgNetSales = Math.round(kpis.netSales / datadays);
 
-  const liveDays = event.timeSeries.filter((d) => d.isLiveDate);
   const liveDayRows: (string | number)[][] = [];
-  if (liveDays.length === 1) {
-    liveDayRows.push(['라이브 순매출', liveDays[0].netSales]);
-  } else if (liveDays.length >= 2) {
-    const liveTotal = liveDays.reduce((sum, d) => sum + d.netSales, 0);
+  if (event.liveNetSales.length === 1) {
+    liveDayRows.push(['라이브 순매출', event.liveNetSales[0].netSales]);
+  } else if (event.liveNetSales.length >= 2) {
+    const liveTotal = event.liveNetSales.reduce((sum, d) => sum + d.netSales, 0);
     liveDayRows.push(['라이브 합계', liveTotal]);
-    liveDays.forEach((d, i) => {
+    event.liveNetSales.forEach((d, i) => {
       liveDayRows.push([`라이브 ${i + 1}일차 (${d.date.slice(5)})`, d.netSales]);
     });
   }

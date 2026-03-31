@@ -1,3 +1,4 @@
+declare const __BUILD_TIME__: string;
 import { useState, useEffect, useRef } from 'react';
 import { usePromotionStore } from './stores/promotionStore';
 import { useCommentStore } from './stores/commentStore';
@@ -23,10 +24,12 @@ function App() {
     context,
     compareContexts,
     timeSeries,
+    liveNetSales,
     productRows,
     parsedData,
     compareKpis,
     compareTimeSeries,
+    compareLiveNetSales,
     setContext,
     setCompareFile,
     setCompareContext,
@@ -112,13 +115,14 @@ function App() {
   const reportData: ReportData | null =
     kpis && context
       ? {
-          context, kpis, timeSeries, productRows,
+          context, kpis, timeSeries, productRows, liveNetSales,
           compareEvents: compareKpis
             .map((ck, i) => ck ? {
               context: compareContexts[i],
               kpis: ck,
               timeSeries: compareTimeSeries[i] ?? [],
               productRows: compareProductRowsStore[i] ?? [],
+              liveNetSales: compareLiveNetSales[i] ?? [],
             } : null)
             .filter((e): e is NonNullable<typeof e> => e !== null),
         }
@@ -246,6 +250,7 @@ function App() {
                 hasProducts={hasProducts}
                 context={context}
                 timeSeries={timeSeries}
+                liveNetSales={liveNetSales}
               />
               </div>
             </ErrorBoundary>
@@ -297,7 +302,7 @@ function App() {
       {/* 푸터 */}
       <footer className="border-t border-gray-200 bg-white mt-8">
         <div className="max-w-screen-xl mx-auto px-4 py-4 text-center text-xs text-gray-400">
-          제작 및 수정 문의: DESKER 김선영 (현재버전명: v3.0-dashboard-complete)
+          제작 및 수정 문의: DESKER 김선영 (현재버전명: v3.0-dashboard-complete | 배포일자: {__BUILD_TIME__})
         </div>
       </footer>
     </div>

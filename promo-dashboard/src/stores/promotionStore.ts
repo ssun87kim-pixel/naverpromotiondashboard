@@ -11,6 +11,7 @@ import {
   computeTimeSeries,
   computeHourly,
   computeProductStats,
+  computeLiveNetSales,
 } from '../services/AnalyticsService';
 import type {
   PromotionRecord,
@@ -20,6 +21,7 @@ import type {
   DailyTimeSeries,
   HourlyData,
   ProductRow,
+  LiveDayResult,
 } from '../types/index';
 
 // ============================================================
@@ -54,9 +56,11 @@ interface PromotionStore {
   compareTimeSeries: DailyTimeSeries[][];
   compareHourlyData: HourlyData[][];
   compareProductRows: ProductRow[][];
+  compareLiveNetSales: LiveDayResult[][];
   timeSeries: DailyTimeSeries[];
   hourlyData: HourlyData[];
   productRows: ProductRow[];
+  liveNetSales: LiveDayResult[];
 
   // UI 상태
   isDirty: boolean;
@@ -102,9 +106,11 @@ const initialState = {
   compareTimeSeries: [] as DailyTimeSeries[][],
   compareHourlyData: [] as HourlyData[][],
   compareProductRows: [] as ProductRow[][],
+  compareLiveNetSales: [] as LiveDayResult[][],
   timeSeries: [] as DailyTimeSeries[],
   hourlyData: [] as HourlyData[],
   productRows: [] as ProductRow[],
+  liveNetSales: [] as LiveDayResult[],
   isDirty: false,
   inputPanelOpen: true,
   pdfCaptureMode: false,
@@ -235,6 +241,11 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
     const liveDates = context?.liveDates ?? [];
     const timeSeries = salesData ? computeTimeSeries(salesData, liveDates) : [];
 
+    // 6-1. 라이브 순매출 계산 (시간대 필터링)
+    const liveNetSales = salesData && liveDates.length > 0
+      ? computeLiveNetSales(salesData, liveDates, context?.liveStartHour, context?.liveEndHour)
+      : [];
+
     // 7. 시간대별 계산 (판매성과 있을 때만)
     const hourlyData = salesData ? computeHourly(salesData) : [];
 
@@ -249,6 +260,7 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
     const compareTimeSeriesResult: DailyTimeSeries[][] = [];
     const compareHourlyResult: HourlyData[][] = [];
     const compareProductResult: ProductRow[][] = [];
+    const compareLiveNetSalesResult: LiveDayResult[][] = [];
 
     for (let i = 0; i < compareFiles.length; i++) {
       const cf = compareFiles[i];
@@ -258,6 +270,7 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
         compareTimeSeriesResult.push([]);
         compareHourlyResult.push([]);
         compareProductResult.push([]);
+        compareLiveNetSalesResult.push([]);
         continue;
       }
       if (signal?.aborted) throw new DOMException('분석이 취소되었습니다', 'AbortError');
@@ -289,6 +302,9 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
       const cTimeSeries = cSales ? computeTimeSeries(cSales, cLiveDates) : [];
       const cHourly = cSales ? computeHourly(cSales) : [];
       const cProductRows = cMerged ? computeProductStats(cMerged) : [];
+      const cLiveNetSales = cSales && cLiveDates.length > 0
+        ? computeLiveNetSales(cSales, cLiveDates, compareContexts[i]?.liveStartHour, compareContexts[i]?.liveEndHour)
+        : [];
 
       compareParsed.push({
         sales: cSales ?? undefined,
@@ -298,6 +314,7 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
       compareTimeSeriesResult.push(cTimeSeries);
       compareHourlyResult.push(cHourly);
       compareProductResult.push(cProductRows);
+      compareLiveNetSalesResult.push(cLiveNetSales);
     }
 
     // 10. 결과 저장
@@ -311,9 +328,11 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
       compareTimeSeries: compareTimeSeriesResult,
       compareHourlyData: compareHourlyResult,
       compareProductRows: compareProductResult,
+      compareLiveNetSales: compareLiveNetSalesResult,
       timeSeries,
       hourlyData,
       productRows,
+      liveNetSales,
       isDirty: false,
     });
   },
@@ -326,6 +345,7 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
       const updatedTimeSeries = state.compareTimeSeries.filter((_, i) => i !== index);
       const updatedHourly = state.compareHourlyData.filter((_, i) => i !== index);
       const updatedProducts = state.compareProductRows.filter((_, i) => i !== index);
+      const updatedLiveNetSales = state.compareLiveNetSales.filter((_, i) => i !== index);
       const updatedParsed = state.parsedData.compare.filter((_, i) => i !== index);
       return {
         compareContexts: updatedContexts,
@@ -334,6 +354,7 @@ export const usePromotionStore = create<PromotionStore>((set, get) => ({
         compareTimeSeries: updatedTimeSeries,
         compareHourlyData: updatedHourly,
         compareProductRows: updatedProducts,
+        compareLiveNetSales: updatedLiveNetSales,
         parsedData: { ...state.parsedData, compare: updatedParsed },
       };
     });

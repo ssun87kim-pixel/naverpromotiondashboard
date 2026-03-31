@@ -6,6 +6,7 @@ import type {
   DailyTimeSeries,
   HourlyData,
   ProductRow,
+  LiveDayResult,
 } from '../types/index';
 
 // ============================================================
@@ -31,8 +32,8 @@ export function computeKpis(
   const couponTotal = products ? products.rows.reduce((sum, r) => sum + r.couponTotal, 0) : 0;
 
   const refundRate =
-    paymentCount > 0
-      ? Math.round((refundCount / paymentCount) * 1000) / 10
+    paymentAmount > 0
+      ? Math.round((refundAmount / paymentAmount) * 1000) / 10
       : 0;
 
   const avgOrderValue =
@@ -164,12 +165,14 @@ export function computeProductStats(merged: MergedProductData): ProductRow[] {
     0
   );
 
-  // 각 상품의 refundRate 먼저 계산 (refundQty / paymentQty × 100)
+  // 각 상품의 refundRate: 파일에 환불비율 컬럼이 있으면 사용, 없으면 계산
   const perRowRefundRates = rows.map((r) =>
-    r.paymentQty > 0 ? (r.refundQty / r.paymentQty) * 100 : 0
+    r.refundRate !== undefined
+      ? r.refundRate
+      : r.paymentQty > 0 ? (r.refundQty / r.paymentQty) * 100 : 0
   );
 
-  // 평균 환불율 = 각 상품 refundRate의 산술 평균
+  // 평균 환불율 = 각 상품 refundRate의 산술 평균 (합계용)
   const avgRefundRate =
     perRowRefundRates.length > 0
       ? perRowRefundRates.reduce((s, v) => s + v, 0) / perRowRefundRates.length
@@ -178,7 +181,6 @@ export function computeProductStats(merged: MergedProductData): ProductRow[] {
   const productRows: ProductRow[] = rows.map((r, i) => {
     const netAmount = r.paymentAmount - r.refundAmount;
     const qtyShare = totalQty > 0 ? (r.paymentQty / totalQty) * 100 : 0;
-    // amountShare = netAmount / totalNetAmount × 100 (스펙: 전체 결제금액 대비 비중)
     const amountShare =
       totalNetAmount > 0 ? (netAmount / totalNetAmount) * 100 : 0;
     const refundRate = perRowRefundRates[i];
@@ -257,4 +259,39 @@ export function computeWeekdaySummary(sales: SalesPerformanceData): WeekdayRow[]
       couponTotal: v.couponTotal,
     }))
     .sort((a, b) => a.order - b.order);
+}
+
+// ============================================================
+// 라이브 순매출 계산 (시간대 필터링)
+// ============================================================
+
+export function computeLiveNetSales(
+  sales: SalesPerformanceData,
+  liveDates: string[],
+  startHour?: number,
+  endHour?: number
+): LiveDayResult[] {
+  const normalizedDates = liveDates
+    .filter((d) => d.trim().length > 0)
+    .map((d) => {
+      const t = d.trim().replace(/[./]/g, '-');
+      if (/^\d{8}$/.test(t)) return `${t.slice(0, 4)}-${t.slice(4, 6)}-${t.slice(6, 8)}`;
+      return t;
+    });
+
+  if (normalizedDates.length === 0) return [];
+
+  const hasHourFilter = startHour !== undefined && endHour !== undefined;
+
+  return normalizedDates.map((ld) => {
+    const filtered = sales.rows.filter((r) => {
+      if (r.date !== ld) return false;
+      if (hasHourFilter && r.hour !== undefined) {
+        return r.hour >= startHour! && r.hour <= endHour!;
+      }
+      return true;
+    });
+    const netSales = filtered.reduce((sum, r) => sum + r.paymentAmount - r.refundAmount, 0);
+    return { date: ld, netSales };
+  }).sort((a, b) => a.date.localeCompare(b.date));
 }

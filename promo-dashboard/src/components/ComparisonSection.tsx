@@ -1,7 +1,7 @@
 import React from 'react';
 import KpiCard from './KpiCard';
-import type { KpiSummary, PromotionRecord, DailyTimeSeries } from '../types/index';
-import { formatCurrency, formatRate, formatNumber, countDays } from '../utils/format';
+import type { KpiSummary, PromotionRecord, DailyTimeSeries, LiveDayResult } from '../types/index';
+import { formatCurrency, formatRate, formatNumber } from '../utils/format';
 import { usePromotionStore } from '../stores/promotionStore';
 
 interface ParsedInfo {
@@ -76,7 +76,7 @@ const KPI_ROWS: KpiRow[] = [
     needsSales: true,
   },
   {
-    label: '환불률',
+    label: '환불률(금액기준)',
     getValue: (k) => k.refundRate.toFixed(1) + '%',
     isInverted: true,
     needsProducts: true,
@@ -105,29 +105,28 @@ interface ColumnProps {
   parsed: ParsedInfo;
   context?: PromotionRecord | null;
   colTimeSeries?: DailyTimeSeries[];
+  colLiveNetSales?: LiveDayResult[];
   onClose?: () => void;
 }
 
-const ComparisonColumn: React.FC<ColumnProps> = ({ title, subtitle, kpis, parsed, context, colTimeSeries = [], onClose }) => {
+const ComparisonColumn: React.FC<ColumnProps> = ({ title, subtitle, kpis, parsed, context, colTimeSeries = [], colLiveNetSales = [], onClose }) => {
   // 2행 카드: 일평균 순매출 + 라이브일자 순매출
   const extraCards: { label: string; value: string }[] = [];
 
-  if (parsed.hasSales && kpis && context?.startDate && context?.endDate) {
-    const days = countDays(context.startDate, context.endDate);
-    const dailyAvg = Math.round(kpis.netSales / days);
+  if (parsed.hasSales && kpis && colTimeSeries.length > 0) {
+    const dailyAvg = Math.round(kpis.netSales / colTimeSeries.length);
     extraCards.push({ label: '일평균 순매출', value: formatCurrency(dailyAvg) });
   } else if (!parsed.hasSales) {
     extraCards.push({ label: '일평균 순매출', value: '-' });
   }
 
-  if (parsed.hasSales) {
-    const liveDays = colTimeSeries.filter((d) => d.isLiveDate);
-    if (liveDays.length === 1) {
-      extraCards.push({ label: '라이브 순매출', value: formatCurrency(liveDays[0].netSales) });
-    } else if (liveDays.length >= 2) {
-      const liveTotal = liveDays.reduce((sum, d) => sum + d.netSales, 0);
+  if (parsed.hasSales && colLiveNetSales.length > 0) {
+    if (colLiveNetSales.length === 1) {
+      extraCards.push({ label: '라이브 순매출', value: formatCurrency(colLiveNetSales[0].netSales) });
+    } else {
+      const liveTotal = colLiveNetSales.reduce((sum, d) => sum + d.netSales, 0);
       extraCards.push({ label: '라이브 합계', value: formatCurrency(liveTotal) });
-      liveDays.forEach((day, i) => {
+      colLiveNetSales.forEach((day, i) => {
         extraCards.push({ label: `라이브 ${i + 1}일차 (${day.date.slice(5)})`, value: formatCurrency(day.netSales) });
       });
     }
@@ -189,6 +188,8 @@ const ComparisonSection: React.FC<ComparisonSectionProps> = ({
   onUpload,
 }) => {
   const pdfCaptureMode = usePromotionStore((s) => s.pdfCaptureMode);
+  const storeLiveNetSales = usePromotionStore((s) => s.liveNetSales);
+  const storeCompareLiveNetSales = usePromotionStore((s) => s.compareLiveNetSales);
   const hasCompare = compareKpis.some((k) => k !== null);
 
   if (!hasCompare) {
@@ -204,6 +205,7 @@ const ComparisonSection: React.FC<ComparisonSectionProps> = ({
             parsed={currentParsed}
             context={currentContext}
             colTimeSeries={currentTimeSeries}
+            colLiveNetSales={storeLiveNetSales}
           />
           {!pdfCaptureMode && (
           <div className="mt-6 flex flex-col items-center gap-3 py-6 border-t border-gray-100">
@@ -237,6 +239,7 @@ const ComparisonSection: React.FC<ComparisonSectionProps> = ({
           parsed={currentParsed}
           context={currentContext}
           colTimeSeries={currentTimeSeries}
+          colLiveNetSales={storeLiveNetSales}
         />
 
         {/* 비교 행사 */}
@@ -252,6 +255,7 @@ const ComparisonSection: React.FC<ComparisonSectionProps> = ({
             parsed={compareParsed[0] ?? EMPTY_PARSED}
             context={compareContexts[0] ?? null}
             colTimeSeries={compareTimeSeries[0] ?? []}
+            colLiveNetSales={storeCompareLiveNetSales[0] ?? []}
             onClose={() => onClose(0)}
           />
         )}

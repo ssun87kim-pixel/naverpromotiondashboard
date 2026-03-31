@@ -35,6 +35,7 @@ export interface ProductRawRow {
   refundCount: number;
   refundAmount: number;
   refundQty: number;
+  refundRate?: number;    // 파일의 환불비율 컬럼 (있을 때)
 }
 
 export interface ProductPerformanceData {
@@ -129,11 +130,18 @@ export interface PromotionRecord {
   startDate: string;
   endDate: string;
   liveDates: string[];
+  liveStartHour?: number;  // 0~23 라이브 시작시간
+  liveEndHour?: number;    // 0~23 라이브 종료시간
   targetAmount: number;
   promotionType: string;
   planningIntent: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface LiveDayResult {
+  date: string;
+  netSales: number;
 }
 
 export interface Reply {

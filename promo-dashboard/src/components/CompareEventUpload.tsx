@@ -128,6 +128,8 @@ const CompareEventUpload: React.FC<Props> = ({ index, onFilesChange, onContextCh
   const [targetAmount, setTargetAmount] = useState(0);
   const [targetAmountDisplay, setTargetAmountDisplay] = useState('');
   const [liveDates, setLiveDates] = useState<string[]>([]);
+  const [liveStartHour, setLiveStartHour] = useState<number | undefined>(undefined);
+  const [liveEndHour, setLiveEndHour] = useState<number | undefined>(undefined);
   const startDateRef = useRef<HTMLInputElement>(null);
   const endDateRef = useRef<HTMLInputElement>(null);
 
@@ -304,6 +306,44 @@ const CompareEventUpload: React.FC<Props> = ({ index, onFilesChange, onContextCh
             handleContextChange({ liveDates: dates });
           }}
         />
+        {liveDates.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 mt-2">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">라이브 시작시간</label>
+              <select
+                value={liveStartHour ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value === '' ? undefined : Number(e.target.value);
+                  setLiveStartHour(v);
+                  handleContextChange({ liveStartHour: v });
+                }}
+                className={inputClass}
+              >
+                <option value="">선택</option>
+                {Array.from({ length: 24 }, (_, i) => (
+                  <option key={i} value={i}>{i}시</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">라이브 종료시간</label>
+              <select
+                value={liveEndHour ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value === '' ? undefined : Number(e.target.value);
+                  setLiveEndHour(v);
+                  handleContextChange({ liveEndHour: v });
+                }}
+                className={inputClass}
+              >
+                <option value="">선택</option>
+                {Array.from({ length: 24 }, (_, i) => (
+                  <option key={i} value={i}>{i}시</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 파일 업로드 존 3개 */}

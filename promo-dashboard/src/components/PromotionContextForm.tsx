@@ -46,6 +46,8 @@ const PromotionContextForm = forwardRef<PromotionContextFormRef, Props>(({ onSub
   );
   const [planningIntent, setPlanningIntent] = useState(initialValues.planningIntent ?? '');
   const [liveDates, setLiveDates] = useState<string[]>(initialValues.liveDates ?? []);
+  const [liveStartHour, setLiveStartHour] = useState<number | undefined>(initialValues.liveStartHour);
+  const [liveEndHour, setLiveEndHour] = useState<number | undefined>(initialValues.liveEndHour);
   const [errors, setErrors] = useState<FormErrors>({});
   const startDateRef = useRef<HTMLInputElement>(null);
   const endDateRef = useRef<HTMLInputElement>(null);
@@ -77,6 +79,8 @@ const PromotionContextForm = forwardRef<PromotionContextFormRef, Props>(({ onSub
         startDate,
         endDate,
         liveDates,
+        liveStartHour,
+        liveEndHour,
         targetAmount: Number(targetAmount),
         promotionType: '',
         planningIntent,
@@ -237,6 +241,38 @@ const PromotionContextForm = forwardRef<PromotionContextFormRef, Props>(({ onSub
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">라이브 진행일자</label>
         <LiveDatesInput value={liveDates} onChange={setLiveDates} />
+        {liveDates.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 mt-2">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">라이브 시작시간</label>
+              <select
+                value={liveStartHour ?? ''}
+                onChange={(e) => setLiveStartHour(e.target.value === '' ? undefined : Number(e.target.value))}
+                className={inputClass}
+                data-testid="field-liveStartHour"
+              >
+                <option value="">선택</option>
+                {Array.from({ length: 24 }, (_, i) => (
+                  <option key={i} value={i}>{i}시</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">라이브 종료시간</label>
+              <select
+                value={liveEndHour ?? ''}
+                onChange={(e) => setLiveEndHour(e.target.value === '' ? undefined : Number(e.target.value))}
+                className={inputClass}
+                data-testid="field-liveEndHour"
+              >
+                <option value="">선택</option>
+                {Array.from({ length: 24 }, (_, i) => (
+                  <option key={i} value={i}>{i}시</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 매출목표금액 */}
