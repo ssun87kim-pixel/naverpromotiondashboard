@@ -48,14 +48,14 @@ function groupByLargeCat(rows: ProductRow[]): Map<string, ProductRow[]> {
   return map;
 }
 
-// 집계 행 계산
-function sumRows(rows: ProductRow[]): { qty: number; refundQty: number; qtyShare: number; netAmount: number; refundAmount: number; amountShare: number; refundRate: number } {
+// 집계 행 계산 (비중은 전체 합계 기준으로 동적 계산)
+function sumRows(rows: ProductRow[], totalQty: number, totalAmount: number): { qty: number; refundQty: number; qtyShare: number; netAmount: number; refundAmount: number; amountShare: number; refundRate: number } {
   const qty = rows.reduce((s, r) => s + r.qty, 0);
   const refundQty = rows.reduce((s, r) => s + r.refundQty, 0);
-  const qtyShare = rows.reduce((s, r) => s + r.qtyShare, 0);
   const netAmount = rows.reduce((s, r) => s + r.netAmount, 0);
   const refundAmount = rows.reduce((s, r) => s + r.refundAmount, 0);
-  const amountShare = rows.reduce((s, r) => s + r.amountShare, 0);
+  const qtyShare = totalQty > 0 ? (qty / totalQty) * 100 : 0;
+  const amountShare = totalAmount > 0 ? (netAmount / totalAmount) * 100 : 0;
   const avgRefundRate = rows.length > 0 ? rows.reduce((s, r) => s + r.refundRate, 0) / rows.length : 0;
   return { qty, refundQty, qtyShare, netAmount, refundAmount, amountShare, refundRate: avgRefundRate };
 }
@@ -91,6 +91,10 @@ const ProductTable: React.FC<ProductTableProps> = ({
       return next;
     });
   };
+
+  // 현재 표시 rows 기준으로 전체 합계 계산 (드릴다운 시 해당 구분이 100% 기준)
+  const totalQty = rows.reduce((s, r) => s + r.qty, 0);
+  const totalAmount = rows.reduce((s, r) => s + r.netAmount, 0);
 
   const divisionMap = groupByDivision(rows);
 
@@ -155,7 +159,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
             ) : (
               sortedDivisions.map((division) => {
                 const divRows = divisionMap.get(division)!;
-                const divSum = sumRows(divRows);
+                const divSum = sumRows(divRows, totalQty, totalAmount);
                 const isOpen = effectiveOpenDivisions.has(division);
                 const largeCatMap = groupByLargeCat(divRows);
                 const sortedLargeCats = Array.from(largeCatMap.keys()).sort((a, b) => {
@@ -195,7 +199,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                     {/* 대분류 행들 */}
                     {isOpen && sortedLargeCats.map((largeCat) => {
                       const lcRows = largeCatMap.get(largeCat)!;
-                      const lcSum = sumRows(lcRows);
+                      const lcSum = sumRows(lcRows, totalQty, totalAmount);
                       const lcKey = `${division}__${largeCat}`;
                       const isLcOpen = effectiveOpenLargeCats.has(lcKey);
                       const sortedProducts = sortRows(lcRows, sortKey, isRefundView);
@@ -240,9 +244,9 @@ const ProductTable: React.FC<ProductTableProps> = ({
                                 </div>
                               </td>
                               <td className="px-3 py-2 text-right text-gray-700 tabular-nums text-xs">{formatNumber(isRefundView ? row.refundQty : row.qty)}</td>
-                              <td className="px-3 py-2 text-right text-gray-500 tabular-nums text-xs">{row.qtyShare.toFixed(1)}%</td>
+                              <td className="px-3 py-2 text-right text-gray-500 tabular-nums text-xs">{(totalQty > 0 ? (row.qty / totalQty) * 100 : 0).toFixed(1)}%</td>
                               <td className="px-3 py-2 text-right text-gray-700 tabular-nums text-xs">{formatCurrency(isRefundView ? row.refundAmount : row.netAmount)}</td>
-                              <td className="px-3 py-2 text-right text-gray-500 tabular-nums text-xs">{row.amountShare.toFixed(1)}%</td>
+                              <td className="px-3 py-2 text-right text-gray-500 tabular-nums text-xs">{(totalAmount > 0 ? (row.netAmount / totalAmount) * 100 : 0).toFixed(1)}%</td>
                               {isRefundView && (
                                 <td className="px-3 py-2 text-right tabular-nums text-xs">
                                   <span style={row.isHighRefund ? { color: '#FF5948', fontWeight: 600 } : { color: '#515151' }}>
