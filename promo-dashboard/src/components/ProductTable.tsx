@@ -117,7 +117,9 @@ const ProductTable: React.FC<ProductTableProps> = ({
     <div className="flex flex-col gap-2">
       {/* 정렬 버튼 */}
       <div className="flex gap-2">
-        {(['qty', 'amount', 'refundRate'] as const).map((key) => (
+        {(['qty', 'amount', 'refundRate'] as const)
+          .filter((key) => isRefundView || key !== 'refundRate')
+          .map((key) => (
           <button
             key={key}
             onClick={() => onSortChange(key)}
@@ -142,13 +144,13 @@ const ProductTable: React.FC<ProductTableProps> = ({
               <th className={thClass}>비중(%)</th>
               <th className={thClass}>{isRefundView ? '환불금액' : '결제금액'}</th>
               <th className={thClass}>비중(%)</th>
-              <th className={thClass}>환불율</th>
+              {isRefundView && <th className={thClass}>환불율</th>}
             </tr>
           </thead>
           <tbody>
             {sortedDivisions.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-8 text-gray-400">데이터가 없습니다</td>
+                <td colSpan={isRefundView ? 6 : 5} className="text-center py-8 text-gray-400">데이터가 없습니다</td>
               </tr>
             ) : (
               sortedDivisions.map((division) => {
@@ -187,7 +189,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                       <td className="px-3 py-2 text-right tabular-nums text-gray-600">{divSum.qtyShare.toFixed(1)}%</td>
                       <td className="px-3 py-2 text-right tabular-nums font-medium">{formatCurrency(isRefundView ? divSum.refundAmount : divSum.netAmount)}</td>
                       <td className="px-3 py-2 text-right tabular-nums text-gray-600">{divSum.amountShare.toFixed(1)}%</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{formatRate(divSum.refundRate)}</td>
+                      {isRefundView && <td className="px-3 py-2 text-right tabular-nums">{formatRate(divSum.refundRate)}</td>}
                     </tr>
 
                     {/* 대분류 행들 */}
@@ -213,7 +215,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                             <td className="px-3 py-2 text-right tabular-nums text-gray-600">{lcSum.qtyShare.toFixed(1)}%</td>
                             <td className="px-3 py-2 text-right tabular-nums text-gray-800">{formatCurrency(isRefundView ? lcSum.refundAmount : lcSum.netAmount)}</td>
                             <td className="px-3 py-2 text-right tabular-nums text-gray-600">{lcSum.amountShare.toFixed(1)}%</td>
-                            <td className="px-3 py-2 text-right tabular-nums">{formatRate(lcSum.refundRate)}</td>
+                            {isRefundView && <td className="px-3 py-2 text-right tabular-nums">{formatRate(lcSum.refundRate)}</td>}
                           </tr>
 
                           {/* 상품 행들 */}
@@ -241,11 +243,13 @@ const ProductTable: React.FC<ProductTableProps> = ({
                               <td className="px-3 py-2 text-right text-gray-500 tabular-nums text-xs">{row.qtyShare.toFixed(1)}%</td>
                               <td className="px-3 py-2 text-right text-gray-700 tabular-nums text-xs">{formatCurrency(isRefundView ? row.refundAmount : row.netAmount)}</td>
                               <td className="px-3 py-2 text-right text-gray-500 tabular-nums text-xs">{row.amountShare.toFixed(1)}%</td>
-                              <td className="px-3 py-2 text-right tabular-nums text-xs">
-                                <span style={row.isHighRefund ? { color: '#FF5948', fontWeight: 600 } : { color: '#515151' }}>
-                                  {formatRate(row.refundRate)}
-                                </span>
-                              </td>
+                              {isRefundView && (
+                                <td className="px-3 py-2 text-right tabular-nums text-xs">
+                                  <span style={row.isHighRefund ? { color: '#FF5948', fontWeight: 600 } : { color: '#515151' }}>
+                                    {formatRate(row.refundRate)}
+                                  </span>
+                                </td>
+                              )}
                             </tr>
                           ))}
                         </React.Fragment>
