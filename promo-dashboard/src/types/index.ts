@@ -112,9 +112,11 @@ export interface ProductRow {
   qty: number;
   qtyShare: number;       // 전체 대비 판매수량 비중 (%)
   netAmount: number;      // 결제금액 - 환불금액
+  refundAmount: number;   // 환불금액 (엑셀 Q열)
   amountShare: number;    // 전체 결제금액 대비 비중 (%)
+  refundQty: number;      // 환불수량 (엑셀 S열)
   refundCount: number;
-  refundRate: number;     // 환불수량 / 전체 주문수량 × 100
+  refundRate: number;     // 환불비율(결제상품수량) (엑셀 T열)
   isHighRefund: boolean;  // 평균 환불율 초과 여부
   isUnmatched: boolean;   // 카테고리 미매칭 여부
 }

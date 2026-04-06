@@ -9,6 +9,7 @@ interface ProductTableProps {
   onSortChange: (key: 'qty' | 'amount' | 'refundRate') => void;
   onCategoryClick?: (division: string) => void;
   drillDownCategory?: string | null;
+  isRefundView?: boolean;
 }
 
 const SORT_LABELS: Record<'qty' | 'amount' | 'refundRate', string> = {
@@ -17,10 +18,10 @@ const SORT_LABELS: Record<'qty' | 'amount' | 'refundRate', string> = {
   refundRate: '환불율순',
 };
 
-function sortRows(rows: ProductRow[], key: 'qty' | 'amount' | 'refundRate'): ProductRow[] {
+function sortRows(rows: ProductRow[], key: 'qty' | 'amount' | 'refundRate', isRefundView = false): ProductRow[] {
   return [...rows].sort((a, b) => {
-    if (key === 'qty') return b.qty - a.qty;
-    if (key === 'amount') return b.netAmount - a.netAmount;
+    if (key === 'qty') return isRefundView ? b.refundQty - a.refundQty : b.qty - a.qty;
+    if (key === 'amount') return isRefundView ? b.refundAmount - a.refundAmount : b.netAmount - a.netAmount;
     return b.refundRate - a.refundRate;
   });
 }
@@ -48,19 +49,22 @@ function groupByLargeCat(rows: ProductRow[]): Map<string, ProductRow[]> {
 }
 
 // 집계 행 계산
-function sumRows(rows: ProductRow[]): { qty: number; qtyShare: number; netAmount: number; amountShare: number; refundRate: number } {
+function sumRows(rows: ProductRow[]): { qty: number; refundQty: number; qtyShare: number; netAmount: number; refundAmount: number; amountShare: number; refundRate: number } {
   const qty = rows.reduce((s, r) => s + r.qty, 0);
+  const refundQty = rows.reduce((s, r) => s + r.refundQty, 0);
   const qtyShare = rows.reduce((s, r) => s + r.qtyShare, 0);
   const netAmount = rows.reduce((s, r) => s + r.netAmount, 0);
+  const refundAmount = rows.reduce((s, r) => s + r.refundAmount, 0);
   const amountShare = rows.reduce((s, r) => s + r.amountShare, 0);
   const avgRefundRate = rows.length > 0 ? rows.reduce((s, r) => s + r.refundRate, 0) / rows.length : 0;
-  return { qty, qtyShare, netAmount, amountShare, refundRate: avgRefundRate };
+  return { qty, refundQty, qtyShare, netAmount, refundAmount, amountShare, refundRate: avgRefundRate };
 }
 
 const ProductTable: React.FC<ProductTableProps> = ({
   rows,
   sortKey,
   onSortChange,
+  isRefundView = false,
 }) => {
   const pdfCaptureMode = usePromotionStore((s) => s.pdfCaptureMode);
   const [openDivisions, setOpenDivisions] = useState<Set<string>>(new Set());
@@ -94,8 +98,14 @@ const ProductTable: React.FC<ProductTableProps> = ({
   const sortedDivisions = Array.from(divisionMap.keys()).sort((a, b) => {
     const aRows = divisionMap.get(a)!;
     const bRows = divisionMap.get(b)!;
-    if (sortKey === 'qty') return bRows.reduce((s, r) => s + r.qty, 0) - aRows.reduce((s, r) => s + r.qty, 0);
-    if (sortKey === 'amount') return bRows.reduce((s, r) => s + r.netAmount, 0) - aRows.reduce((s, r) => s + r.netAmount, 0);
+    if (sortKey === 'qty') {
+      const qtyField = isRefundView ? 'refundQty' : 'qty';
+      return bRows.reduce((s, r) => s + r[qtyField], 0) - aRows.reduce((s, r) => s + r[qtyField], 0);
+    }
+    if (sortKey === 'amount') {
+      const amtField = isRefundView ? 'refundAmount' : 'netAmount';
+      return bRows.reduce((s, r) => s + r[amtField], 0) - aRows.reduce((s, r) => s + r[amtField], 0);
+    }
     const aAvg = aRows.length > 0 ? aRows.reduce((s, r) => s + r.refundRate, 0) / aRows.length : 0;
     const bAvg = bRows.length > 0 ? bRows.reduce((s, r) => s + r.refundRate, 0) / bRows.length : 0;
     return bAvg - aAvg;
@@ -117,7 +127,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                 : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400'
             }`}
           >
-            {SORT_LABELS[key]}
+            {isRefundView && key === 'qty' ? '환불수량순' : isRefundView && key === 'amount' ? '환불금액순' : SORT_LABELS[key]}
           </button>
         ))}
       </div>
@@ -128,9 +138,9 @@ const ProductTable: React.FC<ProductTableProps> = ({
           <thead className="sticky top-0 bg-gray-50 z-10">
             <tr>
               <th className="text-left px-3 py-2 font-medium text-gray-700 border-b border-gray-200 whitespace-nowrap">구분 / 대분류 / 상품명</th>
-              <th className={thClass}>판매수량</th>
+              <th className={thClass}>{isRefundView ? '환불수량' : '판매수량'}</th>
               <th className={thClass}>비중(%)</th>
-              <th className={thClass}>결제금액</th>
+              <th className={thClass}>{isRefundView ? '환불금액' : '결제금액'}</th>
               <th className={thClass}>비중(%)</th>
               <th className={thClass}>환불율</th>
             </tr>
@@ -149,8 +159,14 @@ const ProductTable: React.FC<ProductTableProps> = ({
                 const sortedLargeCats = Array.from(largeCatMap.keys()).sort((a, b) => {
                   const aRows = largeCatMap.get(a)!;
                   const bRows = largeCatMap.get(b)!;
-                  if (sortKey === 'qty') return bRows.reduce((s, r) => s + r.qty, 0) - aRows.reduce((s, r) => s + r.qty, 0);
-                  if (sortKey === 'amount') return bRows.reduce((s, r) => s + r.netAmount, 0) - aRows.reduce((s, r) => s + r.netAmount, 0);
+                  if (sortKey === 'qty') {
+                    const qtyField = isRefundView ? 'refundQty' : 'qty';
+                    return bRows.reduce((s, r) => s + r[qtyField], 0) - aRows.reduce((s, r) => s + r[qtyField], 0);
+                  }
+                  if (sortKey === 'amount') {
+                    const amtField = isRefundView ? 'refundAmount' : 'netAmount';
+                    return bRows.reduce((s, r) => s + r[amtField], 0) - aRows.reduce((s, r) => s + r[amtField], 0);
+                  }
                   const aAvg = aRows.length > 0 ? aRows.reduce((s, r) => s + r.refundRate, 0) / aRows.length : 0;
                   const bAvg = bRows.length > 0 ? bRows.reduce((s, r) => s + r.refundRate, 0) / bRows.length : 0;
                   return bAvg - aAvg;
@@ -167,9 +183,9 @@ const ProductTable: React.FC<ProductTableProps> = ({
                         <span className="mr-2 text-gray-500">{isOpen ? '▼' : '▶'}</span>
                         {division}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums font-medium">{formatNumber(divSum.qty)}</td>
+                      <td className="px-3 py-2 text-right tabular-nums font-medium">{formatNumber(isRefundView ? divSum.refundQty : divSum.qty)}</td>
                       <td className="px-3 py-2 text-right tabular-nums text-gray-600">{divSum.qtyShare.toFixed(1)}%</td>
-                      <td className="px-3 py-2 text-right tabular-nums font-medium">{formatCurrency(divSum.netAmount)}</td>
+                      <td className="px-3 py-2 text-right tabular-nums font-medium">{formatCurrency(isRefundView ? divSum.refundAmount : divSum.netAmount)}</td>
                       <td className="px-3 py-2 text-right tabular-nums text-gray-600">{divSum.amountShare.toFixed(1)}%</td>
                       <td className="px-3 py-2 text-right tabular-nums">{formatRate(divSum.refundRate)}</td>
                     </tr>
@@ -180,7 +196,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                       const lcSum = sumRows(lcRows);
                       const lcKey = `${division}__${largeCat}`;
                       const isLcOpen = effectiveOpenLargeCats.has(lcKey);
-                      const sortedProducts = sortRows(lcRows, sortKey);
+                      const sortedProducts = sortRows(lcRows, sortKey, isRefundView);
 
                       return (
                         <React.Fragment key={lcKey}>
@@ -193,9 +209,9 @@ const ProductTable: React.FC<ProductTableProps> = ({
                               <span className="mr-2 text-gray-400">{isLcOpen ? '▼' : '▶'}</span>
                               {largeCat}
                             </td>
-                            <td className="px-3 py-2 text-right tabular-nums text-gray-800">{formatNumber(lcSum.qty)}</td>
+                            <td className="px-3 py-2 text-right tabular-nums text-gray-800">{formatNumber(isRefundView ? lcSum.refundQty : lcSum.qty)}</td>
                             <td className="px-3 py-2 text-right tabular-nums text-gray-600">{lcSum.qtyShare.toFixed(1)}%</td>
-                            <td className="px-3 py-2 text-right tabular-nums text-gray-800">{formatCurrency(lcSum.netAmount)}</td>
+                            <td className="px-3 py-2 text-right tabular-nums text-gray-800">{formatCurrency(isRefundView ? lcSum.refundAmount : lcSum.netAmount)}</td>
                             <td className="px-3 py-2 text-right tabular-nums text-gray-600">{lcSum.amountShare.toFixed(1)}%</td>
                             <td className="px-3 py-2 text-right tabular-nums">{formatRate(lcSum.refundRate)}</td>
                           </tr>
@@ -221,9 +237,9 @@ const ProductTable: React.FC<ProductTableProps> = ({
                                   )}
                                 </div>
                               </td>
-                              <td className="px-3 py-2 text-right text-gray-700 tabular-nums text-xs">{formatNumber(row.qty)}</td>
+                              <td className="px-3 py-2 text-right text-gray-700 tabular-nums text-xs">{formatNumber(isRefundView ? row.refundQty : row.qty)}</td>
                               <td className="px-3 py-2 text-right text-gray-500 tabular-nums text-xs">{row.qtyShare.toFixed(1)}%</td>
-                              <td className="px-3 py-2 text-right text-gray-700 tabular-nums text-xs">{formatCurrency(row.netAmount)}</td>
+                              <td className="px-3 py-2 text-right text-gray-700 tabular-nums text-xs">{formatCurrency(isRefundView ? row.refundAmount : row.netAmount)}</td>
                               <td className="px-3 py-2 text-right text-gray-500 tabular-nums text-xs">{row.amountShare.toFixed(1)}%</td>
                               <td className="px-3 py-2 text-right tabular-nums text-xs">
                                 <span style={row.isHighRefund ? { color: '#FF5948', fontWeight: 600 } : { color: '#515151' }}>

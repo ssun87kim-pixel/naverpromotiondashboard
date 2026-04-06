@@ -73,6 +73,7 @@ const ProductBlock: React.FC<ProductBlockProps> = ({ label, period, rows }) => {
             onSortChange={setRefundSortKey}
             onCategoryClick={() => {}}
             drillDownCategory={null}
+            isRefundView
           />
         </div>
       )}

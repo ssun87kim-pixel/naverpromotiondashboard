@@ -22,3 +22,22 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+.vercel
+.env*.local
+
+# 문서/미디어 파일 (Rule 8)
+*.docx
+*.xlsx
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.svg
+
+# public 폴더 이미지는 허용
+!public/*.png
+!public/*.jpg
+!public/*.svg

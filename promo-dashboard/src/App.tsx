@@ -178,7 +178,7 @@ function App() {
               </div>
 
               {/* 비교 행사 업로드 (선택) */}
-              <div className="space-y-3">
+              <div className="space-y-3" data-compare-upload>
                 {compareSlots >= 1 && (
                   <CompareEventUpload
                     index={0}
@@ -278,6 +278,10 @@ function App() {
                 onClose={handleCloseCompare}
                 onUpload={() => {
                   if (!inputPanelOpen) toggleInputPanel();
+                  if (compareSlots < 1) setCompareSlots(1);
+                  setTimeout(() => {
+                    document.querySelector('[data-compare-upload]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }, 100);
                 }}
               />
               </div>
@@ -301,8 +305,8 @@ function App() {
 
       {/* 푸터 */}
       <footer className="border-t border-gray-200 bg-white mt-8">
-        <div className="max-w-screen-xl mx-auto px-4 py-4 text-center text-xs text-gray-400">
-          제작 및 수정 문의: DESKER 김선영 (현재버전명: v3.0-dashboard-complete | 배포일자: {__BUILD_TIME__})
+        <div className="max-w-screen-xl mx-auto px-4 py-4 text-center" style={{ fontSize: '13px', color: '#969696' }}>
+          개발 및 수정문의: DESKER 김선영 | v3.0-dashboard-complete | {__BUILD_TIME__}
         </div>
       </footer>
     </div>

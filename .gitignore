@@ -8,3 +8,21 @@ Thumbs.db
 # 테스트/샘플 데이터 (개인 파일)
 test/
 SAMPLEDATA/
+
+# 문서/미디어 파일 (Rule 8)
+*.docx
+*.xlsx
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.svg
+
+# public 폴더 이미지는 허용
+!public/*.png
+!public/*.jpg
+!public/*.svg
+
+.vercel
