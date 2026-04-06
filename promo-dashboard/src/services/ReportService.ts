@@ -183,6 +183,7 @@ export async function exportExcel(data: ReportData): Promise<void> {
       kpis: data.kpis,
       timeSeries: data.timeSeries,
       productRows: data.productRows,
+      liveNetSales: data.liveNetSales,
     });
 
     // 비교 행사 시트
