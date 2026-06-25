@@ -18,9 +18,10 @@ interface ProductBlockProps {
   label: string;
   period?: string;
   rows: ProductRow[];
+  compareRows?: ProductRow[];
 }
 
-const ProductBlock: React.FC<ProductBlockProps> = ({ label, period, rows }) => {
+const ProductBlock: React.FC<ProductBlockProps> = ({ label, period, rows, compareRows }) => {
   const [sortKey, setSortKey] = useState<'qty' | 'amount' | 'refundRate'>('qty');
   const [refundSortKey, setRefundSortKey] = useState<'qty' | 'amount' | 'refundRate'>('refundRate');
   const [drillDown, setDrillDown] = useState<string | null>(null);
@@ -51,6 +52,7 @@ const ProductBlock: React.FC<ProductBlockProps> = ({ label, period, rows }) => {
         onSortChange={setSortKey}
         onCategoryClick={(d) => setDrillDown(d)}
         drillDownCategory={drillDown}
+        compareRows={compareRows}
       />
 
       {highRefundRows.length > 0 && (
@@ -119,9 +121,9 @@ const ProductSection: React.FC = () => {
     <section className="flex flex-col gap-6">
       <h2 className="text-base font-semibold text-gray-900">상품별 성과 분석</h2>
       <div className={`grid gap-6 ${compareBlocks.length === 1 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
-        {productRows.length > 0 && <ProductBlock label={currentLabel} period={currentPeriod} rows={productRows} />}
+        {productRows.length > 0 && <ProductBlock label={currentLabel} period={currentPeriod} rows={productRows} compareRows={compareBlocks[0]?.rows} />}
         {compareBlocks.map((b) => (
-          <ProductBlock key={b.label} label={b.label} period={b.period} rows={b.rows} />
+          <ProductBlock key={b.label} label={b.label} period={b.period} rows={b.rows} compareRows={productRows.length > 0 ? productRows : undefined} />
         ))}
       </div>
       <PdfCaptureNotice />

@@ -59,13 +59,27 @@ function safeSheetName(name: string): string {
   return name.replace(/[\\/*?[\]:]/g, '').slice(0, 31);
 }
 
+/** 워크북 내 중복되지 않는 시트 이름 반환 */
+function uniqueSheetName(wb: XLSX.WorkBook, name: string): string {
+  const base = safeSheetName(name);
+  if (!wb.SheetNames.includes(base)) return base;
+  let i = 2;
+  let candidate = safeSheetName(`${name}(${i})`);
+  while (wb.SheetNames.includes(candidate)) {
+    i++;
+    candidate = safeSheetName(`${name}(${i})`);
+  }
+  return candidate;
+}
+
 /** 한 행사분의 시트 4개를 workbook에 추가 */
 function addEventSheets(
   wb: XLSX.WorkBook,
   prefix: string,
   event: EventData,
+  compareProductRows?: ProductRow[],
 ): void {
-  const ctx = event.context;
+  const ctx = event.context ?? {} as PromotionRecord;
   const kpis = event.kpis;
 
   // ── 컨텍스트 시트 ──
@@ -79,7 +93,7 @@ function addEventSheets(
   const ws1 = XLSX.utils.aoa_to_sheet(sheet1Data);
   applyNumberFormat(ws1, 1, 4, 4, '#,##0');
   ws1['!cols'] = [{ wch: 16 }, { wch: 40 }];
-  XLSX.utils.book_append_sheet(wb, ws1, safeSheetName(`${prefix}_컨텍스트`));
+  XLSX.utils.book_append_sheet(wb, ws1, uniqueSheetName(wb, `${prefix}_컨텍스트`));
 
   // ── KPI 시트 ──
   const datadays = event.timeSeries.length || 1;
@@ -121,7 +135,7 @@ function addEventSheets(
     applyNumberFormat(ws2, 1, r, r, '0.0%');
   }
   ws2['!cols'] = [{ wch: 24 }, { wch: 20 }];
-  XLSX.utils.book_append_sheet(wb, ws2, safeSheetName(`${prefix}_KPI`));
+  XLSX.utils.book_append_sheet(wb, ws2, uniqueSheetName(wb, `${prefix}_KPI`));
 
   // ── 일별 판매성과 시트 ──
   if (event.timeSeries.length > 0) {
@@ -138,38 +152,86 @@ function addEventSheets(
     ws3['!cols'] = [
       { wch: 14 }, { wch: 6 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 },
     ];
-    XLSX.utils.book_append_sheet(wb, ws3, safeSheetName(`${prefix}_일별`));
+    XLSX.utils.book_append_sheet(wb, ws3, uniqueSheetName(wb, `${prefix}_일별`));
   }
 
   // ── 상품별 성과 시트 ──
   if (event.productRows.length > 0) {
-    const sheet4Header = [
-      '구분', '대분류', '상품명',
-      '판매수량', '수량비중',
-      '결제금액', '금액비중',
-      '환불율',
-    ];
-    const sheet4Rows = event.productRows.map((row) => [
-      row.division, row.largeCat, row.productName,
-      row.qty, row.qtyShare / 100,
-      row.netAmount, row.amountShare / 100,
-      row.refundRate / 100,
-    ]);
+    const hasDelta = compareProductRows && compareProductRows.length > 0;
+
+    // 비교 행사 상품 lookup (productId 또는 상품명 기준)
+    const cmpByProduct = new Map<string, { qty: number; netAmount: number }>();
+    if (hasDelta) {
+      for (const row of compareProductRows!) {
+        const pk = row.productId || row.productName;
+        const ex = cmpByProduct.get(pk) || { qty: 0, netAmount: 0 };
+        cmpByProduct.set(pk, { qty: ex.qty + row.qty, netAmount: ex.netAmount + row.netAmount });
+      }
+    }
+
+    const sheet4Header = hasDelta
+      ? ['구분', '대분류', '상품명', '판매수량', '수량비중', '수량증감', '수량증감율', '결제금액', '금액비중', '금액증감', '금액증감율', '환불율']
+      : ['구분', '대분류', '상품명', '판매수량', '수량비중', '결제금액', '금액비중', '환불율'];
+
+    const sheet4Rows = event.productRows.map((row) => {
+      if (hasDelta) {
+        const pk = row.productId || row.productName;
+        const cmp = cmpByProduct.get(pk);
+        const qtyDelta = cmp !== undefined ? row.qty - cmp.qty : null;
+        const amtDelta = cmp !== undefined ? row.netAmount - cmp.netAmount : null;
+        const qtyRate = cmp !== undefined && cmp.qty !== 0 ? (row.qty / cmp.qty - 1) : null;
+        const amtRate = cmp !== undefined && cmp.netAmount !== 0 ? (row.netAmount / cmp.netAmount - 1) : null;
+        return [
+          row.division, row.largeCat, row.productName,
+          row.qty, row.qtyShare / 100,
+          qtyDelta, qtyRate,
+          row.netAmount, row.amountShare / 100,
+          amtDelta, amtRate,
+          row.refundRate / 100,
+        ];
+      }
+      return [
+        row.division, row.largeCat, row.productName,
+        row.qty, row.qtyShare / 100,
+        row.netAmount, row.amountShare / 100,
+        row.refundRate / 100,
+      ];
+    });
+
     const ws4 = XLSX.utils.aoa_to_sheet([sheet4Header, ...sheet4Rows]);
     const sheet4LastRow = event.productRows.length;
-    for (const c of [3, 5]) {
-      applyNumberFormat(ws4, c, 1, sheet4LastRow, '#,##0');
+
+    if (hasDelta) {
+      // 판매수량(3), 수량증감(5), 결제금액(7), 금액증감(9): #,##0
+      for (const c of [3, 5, 7, 9]) {
+        applyNumberFormat(ws4, c, 1, sheet4LastRow, '#,##0');
+      }
+      // 수량비중(4), 수량증감율(6), 금액비중(8), 금액증감율(10), 환불율(11): 0.0%
+      for (const c of [4, 6, 8, 10, 11]) {
+        applyNumberFormat(ws4, c, 1, sheet4LastRow, '0.0%');
+      }
+      ws4['!cols'] = [
+        { wch: 12 }, { wch: 14 }, { wch: 30 },
+        { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 },
+        { wch: 16 }, { wch: 10 }, { wch: 16 }, { wch: 10 },
+        { wch: 10 },
+      ];
+    } else {
+      for (const c of [3, 5]) {
+        applyNumberFormat(ws4, c, 1, sheet4LastRow, '#,##0');
+      }
+      for (const c of [4, 6, 7]) {
+        applyNumberFormat(ws4, c, 1, sheet4LastRow, '0.0%');
+      }
+      ws4['!cols'] = [
+        { wch: 12 }, { wch: 14 }, { wch: 30 },
+        { wch: 10 }, { wch: 12 },
+        { wch: 16 }, { wch: 12 },
+        { wch: 10 },
+      ];
     }
-    for (const c of [4, 6, 7]) {
-      applyNumberFormat(ws4, c, 1, sheet4LastRow, '0.0%');
-    }
-    ws4['!cols'] = [
-      { wch: 12 }, { wch: 14 }, { wch: 30 },
-      { wch: 10 }, { wch: 12 },
-      { wch: 16 }, { wch: 12 },
-      { wch: 10 },
-    ];
-    XLSX.utils.book_append_sheet(wb, ws4, safeSheetName(`${prefix}_상품`));
+
+    XLSX.utils.book_append_sheet(wb, ws4, uniqueSheetName(wb, `${prefix}_상품`));
   }
 }
 
@@ -177,27 +239,29 @@ export async function exportExcel(data: ReportData): Promise<void> {
   try {
     const wb = XLSX.utils.book_new();
 
-    // 이번 행사 시트
-    addEventSheets(wb, data.context.eventName, {
+    // 이번 행사 시트 (첫 번째 비교 행사 기준으로 증감 계산)
+    addEventSheets(wb, data.context?.eventName ?? '이번행사', {
       context: data.context,
       kpis: data.kpis,
       timeSeries: data.timeSeries,
       productRows: data.productRows,
       liveNetSales: data.liveNetSales,
-    });
+    }, data.compareEvents?.[0]?.productRows);
 
-    // 비교 행사 시트
+    // 비교 행사 시트 (증감 없이 원본 데이터만)
     if (data.compareEvents) {
       for (const compareEvent of data.compareEvents) {
-        addEventSheets(wb, compareEvent.context.eventName, compareEvent);
+        if (!compareEvent?.context) continue;
+        addEventSheets(wb, compareEvent.context.eventName ?? '비교행사', compareEvent);
       }
     }
 
     // ── 파일 저장 ──────────────────────────────────────────
-    const filename = `${data.context.eventName}_성과분석_${getTodayStr()}.xlsx`;
+    const filename = `${data.context?.eventName ?? '성과분석'}_성과분석_${getTodayStr()}.xlsx`;
     XLSX.writeFile(wb, filename);
-  } catch {
-    throw new Error('파일 생성에 실패했습니다. 다시 시도해주세요.');
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(`파일 생성에 실패했습니다. (${detail})`);
   }
 }
 
